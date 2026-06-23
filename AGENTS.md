@@ -7,22 +7,27 @@
 ```text
 项目根目录/
 ├── AGENTS.md
+├── docs/                  # 课程说明文档、项目结构文档和图片资源，不进入提交压缩包
+├── rmdb/                  # 当前主开发源码目录，始终保存最新实现
+│   ├── CMakeLists.txt
+│   ├── deps/
+│   ├── rmdb_client/
+│   └── src/
 ├── lab1/
 │   ├── db2023
 │   ├── lab1.md
-│   ├── lab1/                  # 修改后且可直接构建的源代码目录
 │   ├── lab1.zip               # 最终提交压缩包
 │   └── 实验完成流程.md
 ├── lab2/
 │   ├── db2023
 │   ├── lab2.md
-│   ├── lab2/
+│   ├── lab2/                  # 完成 Lab2 后从 rmdb/ 同步得到的交付源码目录
 │   ├── lab2.zip
 │   └── 实验完成流程.md
 └── ...
 ```
 
-你的任务是：**严格依据目标实验的 `labx.md` 完成功能实现、测试、实验记录、压缩交付、Git 提交并推送。**
+你的任务是：**严格依据目标实验的 `labx.md`，在 `rmdb/` 中完成当前最新源码实现；实验完成后同步到 `labx/labx/`，再完成实验记录、压缩交付、Git 提交并推送。**
 
 除非用户明确指定多个实验，否则一次只处理一个 `labx`，不得顺手修改其他实验。
 
@@ -34,9 +39,10 @@
 
 1. 当前目标实验的 `labx/labx.md`；
 2. 课程提供的测试、已有接口、头文件声明、代码注释和错误类型定义；
-3. 当前仓库中的构建脚本、README、项目结构文档；
-4. `lab1/` 中已经完成的内容，仅作为目录组织、实验报告和压缩交付格式的范例；
-5. 本文件中的通用规则。
+3. 当前仓库中的构建脚本、`docs/` 中的 README 和项目结构文档；
+4. `rmdb/` 中当前已有实现，作为后续实验的代码基线；
+5. `lab1/` 中已经完成的内容，仅作为实验报告和压缩交付格式的范例；
+6. 本文件中的通用规则。
 
 必须遵守：
 
@@ -64,7 +70,7 @@ git remote -v
 
 然后完成以下检查：
 
-1. 确认目标目录是 `labx/`，说明文档是 `labx/labx.md`，源代码目录是 `labx/labx/`。
+1. 确认目标目录是 `labx/`，说明文档是 `labx/labx.md`，主开发源码目录是 `rmdb/`。
 2. 完整阅读 `labx/labx.md`，提取：
 
    * 必须实现的接口；
@@ -73,11 +79,11 @@ git remote -v
    * 测试入口、测试点和期待输出；
    * 禁止修改的接口或数据结构；
    * 前置实验依赖。
-3. 阅读目标源代码目录中的 README、CMakeLists、相关头文件、实现文件、测试和注释。
+3. 阅读 `docs/` 中的 README 和项目结构文档，以及 `rmdb/` 中的 CMakeLists、相关头文件、实现文件、测试和注释。
 4. 搜索待实现位置，但不能只依赖 `TODO`：
 
 ```bash
-rg -n "TODO|FIXME|YOUR CODE|IMPLEMENT|未实现|throw|assert\(false\)" labx/labx
+rg -n "TODO|FIXME|YOUR CODE|IMPLEMENT|未实现|throw|assert\(false\)" rmdb
 ```
 
 5. 查看 `lab1/` 的成品结构，重点确认：
@@ -92,8 +98,8 @@ rg -n "TODO|FIXME|YOUR CODE|IMPLEMENT|未实现|throw|assert\(false\)" labx/labx
 
 * 不覆盖、不回滚、不格式化这些无关修改；
 * 不执行 `git reset --hard`、`git clean -fd`、强制 checkout 等破坏性命令；
-* 仅修改当前实验所需文件；
-* 提交时只暂存当前实验相关文件。
+* 仅修改 `rmdb/` 中当前实验所需文件，以及最终交付需要的 `labx/` 文件；
+* 提交时只暂存 `rmdb/` 和当前实验相关文件。
 
 ---
 
@@ -137,9 +143,9 @@ rg -n "TODO|FIXME|YOUR CODE|IMPLEMENT|未实现|throw|assert\(false\)" labx/labx
 
 若当前实验依赖前置实验：
 
-* 先确认目标源代码目录是否已经包含前置功能；
-* 优先在当前 `labx/labx/` 内补齐依赖，不直接修改已完成的 `lab1/`、`lab2/` 等历史交付目录；
-* 确需复用前置代码时，仅复制或移植必要改动，并在 `实验完成流程.md` 中明确说明来源和原因；
+* 先确认 `rmdb/` 是否已经包含前置功能；
+* 优先在 `rmdb/` 内补齐依赖，不直接修改已完成的 `lab1/`、`lab2/` 等历史交付目录；
+* 完成后再将 `rmdb/` 同步为当前实验的 `labx/labx/` 交付源码目录；
 * 不得让修复当前实验的操作破坏已经通过的前置实验测试。
 
 ---
@@ -151,6 +157,7 @@ rg -n "TODO|FIXME|YOUR CODE|IMPLEMENT|未实现|throw|assert\(false\)" labx/labx
 先检查：
 
 * `README.md`；
+* `docs/` 中与当前实验相关的项目结构、测试说明和使用文档；
 * `CMakeLists.txt`；
 * `Makefile`；
 * `test/`、`tests/`、`unit_test.cpp`；
@@ -159,7 +166,7 @@ rg -n "TODO|FIXME|YOUR CODE|IMPLEMENT|未实现|throw|assert\(false\)" labx/labx
 使用仓库原有方式构建，不擅自更换构建系统。典型流程仅供参考：
 
 ```bash
-cd labx/labx
+cd rmdb
 mkdir -p build
 cd build
 cmake ..
@@ -262,6 +269,30 @@ ctest --output-on-failure
 ---
 
 ## 7. 清理与交付目录
+
+完成当前实验实现和测试后，先将 `rmdb/` 同步为当前实验的交付源码目录：
+
+```bash
+mkdir -p labx/labx
+rsync -a --delete \
+  --exclude 'build/' \
+  --exclude 'cmake-build-*/' \
+  --exclude '.git/' \
+  --exclude '.github/' \
+  --exclude '*.o' \
+  --exclude '*.a' \
+  --exclude '*.so' \
+  --exclude '*.out' \
+  --exclude '*.log' \
+  --exclude '*.tmp' \
+  --exclude '*.swp' \
+  --exclude 'core' \
+  --exclude 'core.*' \
+  --exclude '*.zip' \
+  --exclude '.DS_Store' \
+  --exclude '__pycache__/' \
+  rmdb/ labx/labx/
+```
 
 最终必须保留：
 
@@ -370,7 +401,7 @@ unzip -Z1 labx/labx.zip | grep -E '(^|/)(labx\.md|实验完成流程\.md|\.git|b
 ```bash
 git status --short
 git diff --check
-git diff -- labx
+git diff -- rmdb labx
 git diff --stat
 ```
 
@@ -387,7 +418,7 @@ git diff --stat
 只暂存目标实验相关内容：
 
 ```bash
-git add labx/labx labx/labx.zip labx/实验完成流程.md
+git add rmdb labx/labx labx/labx.zip labx/实验完成流程.md
 ```
 
 若本次任务还明确要求修改根目录文件，再单独添加，不要使用无差别的 `git add .`。
@@ -452,6 +483,7 @@ git push -u origin "$(git branch --show-current)"
 
 * [ ] 已完整阅读并逐项覆盖 `labx.md`；
 * [ ] 所有要求的接口和功能均已实现；
+* [ ] `rmdb/` 保存当前最新实现；
 * [ ] 没有通过修改测试、硬编码输出或绕过逻辑作弊；
 * [ ] 项目可从干净构建目录成功编译；
 * [ ] 已运行适用的官方测试和补充测试；
@@ -478,6 +510,7 @@ git push -u origin "$(git branch --show-current)"
 - 修改文件：……
 - 构建命令：……
 - 测试结果：……
+- 主开发目录：`rmdb/`
 - 实验报告：`labx/实验完成流程.md`
 - 源代码目录：`labx/labx/`
 - 压缩包：`labx/labx.zip`
