@@ -85,7 +85,20 @@ void SmManager::drop_db(const std::string& db_name) {
  * @param {string&} db_name 数据库名称，与文件夹同名
  */
 void SmManager::open_db(const std::string& db_name) {
-    
+    if (!is_dir(db_name)) {
+        throw DatabaseNotFoundError(db_name);
+    }
+    if (chdir(db_name.c_str()) < 0) {
+        throw UnixError();
+    }
+    // 读取数据库元数据
+    std::ifstream ifs(DB_META_NAME);
+    ifs >> db_;
+    // 打开所有表的记录文件
+    for (auto &entry : db_.tabs_) {
+        auto &tab_name = entry.first;
+        fhs_.emplace(tab_name, rm_manager_->open_file(tab_name));
+    }
 }
 
 /**
@@ -101,7 +114,14 @@ void SmManager::flush_meta() {
  * @description: 关闭数据库并把数据落盘
  */
 void SmManager::close_db() {
-    
+    // 刷新元数据
+    flush_meta();
+    // 关闭所有表的记录文件句柄
+    fhs_.clear();
+    // 回到根目录
+    if (chdir("..") < 0) {
+        throw UnixError();
+    }
 }
 
 /**
@@ -188,7 +208,20 @@ void SmManager::create_table(const std::string& tab_name, const std::vector<ColD
  * @param {Context*} context
  */
 void SmManager::drop_table(const std::string& tab_name, Context* context) {
-    
+    // 检查表是否存在，不存在则抛出异常（会被上层捕获并输出 failure）
+    TabMeta &tab = db_.get_table(tab_name);
+    // 先正确关闭表的记录文件句柄（刷盘并关闭fd），再从 map 中移除
+    auto it = fhs_.find(tab_name);
+    if (it != fhs_.end()) {
+        rm_manager_->close_file(it->second.get());
+        fhs_.erase(it);
+    }
+    // 删除记录文件
+    rm_manager_->destroy_file(tab_name);
+    // 从元数据中移除表
+    db_.tabs_.erase(tab_name);
+    // 刷新元数据
+    flush_meta();
 }
 
 /**

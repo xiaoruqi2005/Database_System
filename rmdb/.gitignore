@@ -1,0 +1,32 @@
+# Build directories
+build/
+cmake-build-*/
+
+# Compiled objects and libraries
+*.o
+*.a
+*.so
+*.out
+
+# Test databases (created at runtime)
+*_db/
+
+# Runtime output files
+output.txt
+db.log
+db.meta
+
+# Core dumps
+core
+core.*
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/

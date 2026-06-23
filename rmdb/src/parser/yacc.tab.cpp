@@ -67,7 +67,7 @@
 
 
 /* First part of user prologue.  */
-#line 1 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 1 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
 
 #include "ast.h"
 #include "yacc.tab.h"
@@ -82,7 +82,7 @@ void yyerror(YYLTYPE *locp, const char* s) {
 
 using namespace ast;
 
-#line 86 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 86 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -1621,489 +1621,489 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* start: stmt ';'  */
-#line 57 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 57 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         parse_tree = (yyvsp[-1].sv_node);
         YYACCEPT;
     }
-#line 1630 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1630 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 3: /* start: HELP  */
-#line 62 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 62 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         parse_tree = std::make_shared<Help>();
         YYACCEPT;
     }
-#line 1639 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1639 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 4: /* start: EXIT  */
-#line 67 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 67 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         parse_tree = nullptr;
         YYACCEPT;
     }
-#line 1648 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1648 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 5: /* start: T_EOF  */
-#line 72 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 72 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         parse_tree = nullptr;
         YYACCEPT;
     }
-#line 1657 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1657 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 10: /* txnStmt: TXN_BEGIN  */
-#line 87 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 87 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnBegin>();
     }
-#line 1665 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1665 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 11: /* txnStmt: TXN_COMMIT  */
-#line 91 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 91 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnCommit>();
     }
-#line 1673 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1673 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 12: /* txnStmt: TXN_ABORT  */
-#line 95 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 95 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnAbort>();
     }
-#line 1681 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1681 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 13: /* txnStmt: TXN_ROLLBACK  */
-#line 99 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 99 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<TxnRollback>();
     }
-#line 1689 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1689 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 14: /* dbStmt: SHOW TABLES  */
-#line 106 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 106 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<ShowTables>();
     }
-#line 1697 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1697 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 15: /* ddl: CREATE TABLE tbName '(' fieldList ')'  */
-#line 113 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 113 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<CreateTable>((yyvsp[-3].sv_str), (yyvsp[-1].sv_fields));
     }
-#line 1705 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1705 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 16: /* ddl: DROP TABLE tbName  */
-#line 117 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 117 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<DropTable>((yyvsp[0].sv_str));
     }
-#line 1713 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1713 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 17: /* ddl: DESC tbName  */
-#line 121 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 121 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<DescTable>((yyvsp[0].sv_str));
     }
-#line 1721 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1721 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 18: /* ddl: CREATE INDEX tbName '(' colNameList ')'  */
-#line 125 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 125 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<CreateIndex>((yyvsp[-3].sv_str), (yyvsp[-1].sv_strs));
     }
-#line 1729 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1729 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 19: /* ddl: DROP INDEX tbName '(' colNameList ')'  */
-#line 129 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 129 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<DropIndex>((yyvsp[-3].sv_str), (yyvsp[-1].sv_strs));
     }
-#line 1737 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1737 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 20: /* dml: INSERT INTO tbName VALUES '(' valueList ')'  */
-#line 136 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 136 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<InsertStmt>((yyvsp[-4].sv_str), (yyvsp[-1].sv_vals));
     }
-#line 1745 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1745 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 21: /* dml: DELETE FROM tbName optWhereClause  */
-#line 140 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 140 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<DeleteStmt>((yyvsp[-1].sv_str), (yyvsp[0].sv_conds));
     }
-#line 1753 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1753 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 22: /* dml: UPDATE tbName SET setClauses optWhereClause  */
-#line 144 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 144 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<UpdateStmt>((yyvsp[-3].sv_str), (yyvsp[-1].sv_set_clauses), (yyvsp[0].sv_conds));
     }
-#line 1761 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1761 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 23: /* dml: SELECT selector FROM tableList optWhereClause opt_order_clause  */
-#line 148 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 148 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_node) = std::make_shared<SelectStmt>((yyvsp[-4].sv_cols), (yyvsp[-2].sv_strs), (yyvsp[-1].sv_conds), (yyvsp[0].sv_orderby));
     }
-#line 1769 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1769 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 24: /* fieldList: field  */
-#line 155 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 155 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_fields) = std::vector<std::shared_ptr<Field>>{(yyvsp[0].sv_field)};
     }
-#line 1777 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1777 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 25: /* fieldList: fieldList ',' field  */
-#line 159 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 159 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_fields).push_back((yyvsp[0].sv_field));
     }
-#line 1785 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1785 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 26: /* colNameList: colName  */
-#line 166 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 166 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_strs) = std::vector<std::string>{(yyvsp[0].sv_str)};
     }
-#line 1793 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1793 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 27: /* colNameList: colNameList ',' colName  */
-#line 170 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 170 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_strs).push_back((yyvsp[0].sv_str));
     }
-#line 1801 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1801 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 28: /* field: colName type  */
-#line 177 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 177 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_field) = std::make_shared<ColDef>((yyvsp[-1].sv_str), (yyvsp[0].sv_type_len));
     }
-#line 1809 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1809 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 29: /* type: INT  */
-#line 184 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 184 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_type_len) = std::make_shared<TypeLen>(SV_TYPE_INT, sizeof(int));
     }
-#line 1817 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1817 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 30: /* type: CHAR '(' VALUE_INT ')'  */
-#line 188 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 188 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_type_len) = std::make_shared<TypeLen>(SV_TYPE_STRING, (yyvsp[-1].sv_int));
     }
-#line 1825 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1825 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 31: /* type: FLOAT  */
-#line 192 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 192 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_type_len) = std::make_shared<TypeLen>(SV_TYPE_FLOAT, sizeof(float));
     }
-#line 1833 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1833 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 32: /* valueList: value  */
-#line 199 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 199 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_vals) = std::vector<std::shared_ptr<Value>>{(yyvsp[0].sv_val)};
     }
-#line 1841 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1841 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 33: /* valueList: valueList ',' value  */
-#line 203 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 203 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_vals).push_back((yyvsp[0].sv_val));
     }
-#line 1849 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1849 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 34: /* value: VALUE_INT  */
-#line 210 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 210 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_val) = std::make_shared<IntLit>((yyvsp[0].sv_int));
     }
-#line 1857 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1857 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 35: /* value: VALUE_FLOAT  */
-#line 214 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 214 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_val) = std::make_shared<FloatLit>((yyvsp[0].sv_float));
     }
-#line 1865 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1865 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 36: /* value: VALUE_STRING  */
-#line 218 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 218 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_val) = std::make_shared<StringLit>((yyvsp[0].sv_str));
     }
-#line 1873 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1873 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 37: /* condition: col op expr  */
-#line 225 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 225 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_cond) = std::make_shared<BinaryExpr>((yyvsp[-2].sv_col), (yyvsp[-1].sv_comp_op), (yyvsp[0].sv_expr));
     }
-#line 1881 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1881 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 38: /* optWhereClause: %empty  */
-#line 231 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 231 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
                       { /* ignore*/ }
-#line 1887 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1887 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 39: /* optWhereClause: WHERE whereClause  */
-#line 233 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 233 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_conds) = (yyvsp[0].sv_conds);
     }
-#line 1895 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1895 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 40: /* whereClause: condition  */
-#line 240 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 240 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_conds) = std::vector<std::shared_ptr<BinaryExpr>>{(yyvsp[0].sv_cond)};
     }
-#line 1903 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1903 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 41: /* whereClause: whereClause AND condition  */
-#line 244 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 244 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_conds).push_back((yyvsp[0].sv_cond));
     }
-#line 1911 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1911 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 42: /* col: tbName '.' colName  */
-#line 251 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 251 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_col) = std::make_shared<Col>((yyvsp[-2].sv_str), (yyvsp[0].sv_str));
     }
-#line 1919 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1919 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 43: /* col: colName  */
-#line 255 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 255 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_col) = std::make_shared<Col>("", (yyvsp[0].sv_str));
     }
-#line 1927 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1927 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 44: /* colList: col  */
-#line 262 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 262 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_cols) = std::vector<std::shared_ptr<Col>>{(yyvsp[0].sv_col)};
     }
-#line 1935 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1935 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 45: /* colList: colList ',' col  */
-#line 266 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 266 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_cols).push_back((yyvsp[0].sv_col));
     }
-#line 1943 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1943 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 46: /* op: '='  */
-#line 273 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 273 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_comp_op) = SV_OP_EQ;
     }
-#line 1951 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1951 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 47: /* op: '<'  */
-#line 277 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 277 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_comp_op) = SV_OP_LT;
     }
-#line 1959 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1959 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 48: /* op: '>'  */
-#line 281 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 281 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_comp_op) = SV_OP_GT;
     }
-#line 1967 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1967 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 49: /* op: NEQ  */
-#line 285 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 285 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_comp_op) = SV_OP_NE;
     }
-#line 1975 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1975 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 50: /* op: LEQ  */
-#line 289 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 289 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_comp_op) = SV_OP_LE;
     }
-#line 1983 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1983 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 51: /* op: GEQ  */
-#line 293 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 293 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_comp_op) = SV_OP_GE;
     }
-#line 1991 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1991 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 52: /* expr: value  */
-#line 300 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 300 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_expr) = std::static_pointer_cast<Expr>((yyvsp[0].sv_val));
     }
-#line 1999 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 1999 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 53: /* expr: col  */
-#line 304 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 304 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_expr) = std::static_pointer_cast<Expr>((yyvsp[0].sv_col));
     }
-#line 2007 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2007 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 54: /* setClauses: setClause  */
-#line 311 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 311 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_set_clauses) = std::vector<std::shared_ptr<SetClause>>{(yyvsp[0].sv_set_clause)};
     }
-#line 2015 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2015 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 55: /* setClauses: setClauses ',' setClause  */
-#line 315 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 315 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_set_clauses).push_back((yyvsp[0].sv_set_clause));
     }
-#line 2023 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2023 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 56: /* setClause: colName '=' value  */
-#line 322 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 322 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_set_clause) = std::make_shared<SetClause>((yyvsp[-2].sv_str), (yyvsp[0].sv_val));
     }
-#line 2031 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2031 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 57: /* selector: '*'  */
-#line 329 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 329 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_cols) = {};
     }
-#line 2039 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2039 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 59: /* tableList: tbName  */
-#line 337 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 337 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_strs) = std::vector<std::string>{(yyvsp[0].sv_str)};
     }
-#line 2047 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2047 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 60: /* tableList: tableList ',' tbName  */
-#line 341 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 341 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_strs).push_back((yyvsp[0].sv_str));
     }
-#line 2055 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2055 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 61: /* tableList: tableList JOIN tbName  */
-#line 345 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 345 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     {
         (yyval.sv_strs).push_back((yyvsp[0].sv_str));
     }
-#line 2063 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2063 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 62: /* opt_order_clause: ORDER BY order_clause  */
-#line 352 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 352 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     { 
         (yyval.sv_orderby) = (yyvsp[0].sv_orderby); 
     }
-#line 2071 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2071 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 63: /* opt_order_clause: %empty  */
-#line 355 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 355 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
                       { /* ignore*/ }
-#line 2077 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2077 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 64: /* order_clause: col opt_asc_desc  */
-#line 360 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 360 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
     { 
         (yyval.sv_orderby) = std::make_shared<OrderBy>((yyvsp[-1].sv_col), (yyvsp[0].sv_orderby_dir));
     }
-#line 2085 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2085 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 65: /* opt_asc_desc: ASC  */
-#line 366 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 366 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
                  { (yyval.sv_orderby_dir) = OrderBy_ASC;     }
-#line 2091 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2091 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 66: /* opt_asc_desc: DESC  */
-#line 367 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 367 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
                  { (yyval.sv_orderby_dir) = OrderBy_DESC;    }
-#line 2097 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2097 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
   case 67: /* opt_asc_desc: %empty  */
-#line 368 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 368 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
             { (yyval.sv_orderby_dir) = OrderBy_DEFAULT; }
-#line 2103 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2103 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
     break;
 
 
-#line 2107 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.tab.cpp"
+#line 2107 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.tab.cpp"
 
       default: break;
     }
@@ -2332,5 +2332,5 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 374 "/home/myprecious/DB_Three/Database_System/rmdb/src/parser/yacc.y"
+#line 374 "/mnt/d/little project/Database_System/rmdb/src/parser/yacc.y"
 
