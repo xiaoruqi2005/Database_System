@@ -1,109 +1,44 @@
-# RMDB 框架结构文档
+<div align="center">
+<img src="RMDB.jpg"  width=25%  /> 
+</div>
 
-本目录自顶向下地记录 RMDB(中国人民大学数据库教学系统)的整体架构、各层模块职责、关键数据结构、核心接口与数据流。文档内容以 `lab1/lab1/src/` 的代码为基准,并标注各层对应的实验。
 
-## 写作约定
 
-| 项目 | 约定 |
-|---|---|
-| 正文语言 | 中文(讲解、说明、列表) |
-| 图示文字 | **英文**(ASCII art、布局图、流程框图),避免等宽字体下中文对齐错位 |
-| Mermaid 图 | 可用中文标签(Mermaid 无对齐问题) |
-| 代码/字段/方法签名 | 原样 C++ |
-| 组织方式 | **自顶向下**:先整体架构 → 逐层深入 |
+全国大学生计算机系统能力大赛数据库管理系统赛道，以培养学生“数据库管理系统内核实现”能力为目标。本次比赛为参赛队伍提供数据库管理系统代码框架RMDB，参赛队伍在RMDB的基础上，设计和实现一个完整的关系型数据库管理系统，该系统要求具备运行TPC-C基准测试（TPC-C是一个面向联机事务处理的测试基准）常用负载的能力。
 
-## 架构总图
+RMDB由中国人民大学数据库教学团队开发，同时得到教育部-华为”智能基座”项目的支持，平台、赛题和测试用例等得到了全国大学生计算机系统能力大赛数据库管理系统赛道技术委员会的支持和审核。系统能力大赛专家组和[101计划数据库系统课程](http://101.pku.edu.cn/courseDetails?id=DC767C683D697417E0555943CA7634DE)工作组给予了指导。
 
-```
-+=====================================================================+
-|                         RMDB Architecture                           |
-+=====================================================================+
-|                                                                     |
-|  +-------------------+   SQL string                                 |
-|  |   Client / CLI    | --------------+                              |
-|  +-------------------+               |                              |
-|                                      v                              |
-|  +----------------------------------------------------------------+ |
-|  |                       Portal (portal.h)                        | |
-|  |  Parser -> Analyzer -> Optimizer -> ExecutionManager           | |
-|  +----------------------------------------------------------------+ |
-|        |          |           |              |                     |
-|        v          v           v              v                     |
-|  +----------+ +----------+ +----------+ +----------------+         |
-|  | 08-      | | 09-      | | 10-      | | 11-Execution   |         |
-|  | Parser   | | Analyzer | | Optimizer| | Engine         |         |
-|  | (AST)    | | (Query)  | | (Plan)   | | (Executor tree)|         |
-|  +----------+ +----------+ +----------+ +----------------+         |
-|                                                  |                 |
-|                +---------------------------------+                 |
-|                |             |           |      |                 |
-|                v             v           v      v                 |
-|  +------------------+ +------------+ +---------+ +----------+      |
-|  | 07-System        | | 05-Record  | | 06-Index| | 03-      |      |
-|  | Manager (Sm)     | | Manager(Rm)| | Manager | | Context  |      |
-|  | (Meta/DDL)       | | (Tuple)    | | (B+Tree)| | (Txn/Log)|      |
-|  +------------------+ +------------+ +---------+ +----------+      |
-|          |                  |             |                         |
-|          v                  v             v                         |
-|  +----------------------------------------------------------------+ |
-|  |                   04-Storage Layer                             | |
-|  |        BufferPoolManager <-> DiskManager <-> Page              | |
-|  |                    |                                           | |
-|  |              Replacer (LRU)                                    | |
-|  +----------------------------------------------------------------+ |
-|                                  |                                 |
-|                                  v                                 |
-|                          +----------------+                        |
-|                          |  Disk (.db file)|                        |
-|                          +----------------+                        |
-|                                                                     |
-|  Cross-cutting:                                                     |
-|  +------------------+  +------------------+  +------------------+   |
-|  | 12-Transaction   |  | 13-Recovery      |  | 03-Errors/Defs  |   |
-|  | (LockMgr/TxnMgr) |  | (LogMgr/Recovery)|  | (Exceptions)    |   |
-|  +------------------+  +------------------+  +------------------+   |
-+=====================================================================+
-```
+## 实验环境：
+- 操作系统：Ubuntu 18.04 及以上(64位)
+- 编译器：GCC
+- 编程语言：C++17
+- 管理工具：cmake
+- 推荐编辑器：VScode
 
-## 文档索引(建议自顶向下阅读)
+### 依赖环境库配置：
+- gcc 7.1及以上版本（要求完全支持C++17）
+- cmake 3.16及以上版本
+- flex
+- bison
+- readline
 
-| 编号 | 文档 | 内容 | 对应实验 |
-|---|---|---|---|
-| — | [README](README.md)(本文) | 文档索引 + 架构总图 | — |
-| 01 | [01-architecture-overview](01-architecture-overview.md) | 整体分层架构 + SQL 生命周期 + 分层职责矩阵 | 全局 |
-| 02 | [02-project-structure](02-project-structure.md) | 源码目录树 + CMake 构建系统 + 可执行产物 | 全局 |
-| 03 | [03-common-infrastructure](03-common-infrastructure.md) | 公共层:config/defs/errors/Context/RecordPrinter | lab1 |
-| 04 | [04-storage-layer](04-storage-layer.md) | 存储层:Page/DiskManager/BufferPoolManager/LRU | lab1 |
-| 05 | [05-record-manager](05-record-manager.md) | 记录管理层:RmFileHandle/RmManager/RmScan | lab1 |
-| 06 | [06-index-manager](06-index-manager.md) | 索引层:B+ 树 IxIndexHandle/IxManager/IxScan | lab1 |
-| 07 | [07-system-manager](07-system-manager.md) | 系统管理层:元数据 SmManager/TabMeta/ColMeta | lab1 / lab2 |
-| 08 | [08-parser](08-parser.md) | 解析层:flex/bison + AST 节点体系 | 框架提供 |
-| 09 | [09-analyzer](09-analyzer.md) | 分析层:语义检查 + 列名解析 + Query 生成 | lab2 |
-| 10 | [10-optimizer](10-optimizer.md) | 优化层:Plan 体系 + Planner + Optimizer | lab2 |
-| 11 | [11-execution-engine](11-execution-engine.md) | 执行层:火山模型 + 六种 Executor | lab2 |
-| 12 | [12-transaction](12-transaction.md) | 事务层:Transaction/LockManager/2PL | lab5 / lab6 |
-| 13 | [13-recovery](13-recovery.md) | 恢复层:LogManager/LogRecovery/redo-undo | lab8 |
+欲查看有关依赖运行库和编译工具的更多信息，以及如何运行的说明，请查阅[RMDB使用文档](RMDB使用文档.pdf)
 
-## 实验 × 架构层对应矩阵
+欲了解如何在非Linux系统PC上部署实验环境的指导，请查阅[RMDB环境配置文档](RMDB环境配置文档.pdf)
 
-| 架构层 | lab1 | lab2 | lab3 | lab4 | lab5 | lab6 | lab7 | lab8 | lab9 | lab10 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 03-Common | ✅ | — | — | — | — | — | — | — | — | — |
-| 04-Storage | ✅ | — | — | — | — | — | — | — | — | — |
-| 05-Record | ✅ | — | — | — | — | — | — | — | — | — |
-| 06-Index | ✅ | — | — | — | — | — | — | — | — | — |
-| 07-System | 部分 | ✅ | — | — | — | — | — | — | — | — |
-| 08-Parser | 框架 | — | — | — | — | — | — | — | — | — |
-| 09-Analyzer | 框架 | ✅ | — | — | — | — | — | — | — | — |
-| 10-Optimizer | 框架 | ✅ | — | — | — | — | — | — | — | — |
-| 11-Execution | 框架 | ✅ | ✅ | ✅ | — | — | ✅ | — | — | — |
-| 12-Transaction | 框架 | — | — | — | ✅ | ✅ | — | — | — | — |
-| 13-Recovery | 框架 | — | — | — | — | — | — | ✅ | — | — |
+### 项目说明文档
 
-> `✅` 表示该层由对应实验实现;`框架` 表示 RMDB 框架已提供;`部分` 表示部分实现;`—` 表示不涉及或后续扩展。各实验的具体要求以 `labx/labx.md` 为准。
+- [RMDB环境配置文档](RMDB环境配置文档.pdf)
+- [RMDB使用文档](RMDB使用文档.pdf)
+- [RMDB项目结构](RMDB项目结构.pdf)
+- [测试说明文档](测试说明文档.pdf)
 
-## 数据来源说明
+## 推荐参考资料
 
-- 文档内容基于 `lab1/lab1/src/` 中已完成的代码(lab1 已实现存储、记录、索引、公共层)。
-- 执行层、事务层、恢复层在 `lab1` 代码中为**框架骨架/TODO**,文档如实标注实现状态,不臆造未实现细节。
-- 后续实验完成后,应同步更新对应文档的"实现状态"小节。
+- [**Database System Concepts** (***Seventh Edition***)](https://db-book.com/)
+- [PostgreSQL 数据库内核分析](https://book.douban.com/subject/6971366//)
+- [数据库系统实现](https://book.douban.com/subject/4838430/)
+- [数据库系统概论(第5版)](http://chinadb.ruc.edu.cn/second/url/2)
+
+## License
+RMDB采用[木兰宽松许可证，第2版](https://license.coscl.org.cn/MulanPSL2)，可以自由拷贝和使用源码, 当做修改或分发时, 请遵守[木兰宽松许可证，第2版](https://license.coscl.org.cn/MulanPSL2).
