@@ -12,6 +12,8 @@ See the Mulan PSL v2 for more details. */
 #include <vector>
 #include <string>
 #include <memory>
+#include <cerrno>
+#include <cstdlib>
 
 enum JoinType {
     INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN
@@ -19,7 +21,7 @@ enum JoinType {
 namespace ast {
 
 enum SvType {
-    SV_TYPE_INT, SV_TYPE_FLOAT, SV_TYPE_STRING
+    SV_TYPE_INT, SV_TYPE_FLOAT, SV_TYPE_STRING, SV_TYPE_BIGINT
 };
 
 enum SvCompOp {
@@ -116,9 +118,14 @@ struct Value : public Expr {
 };
 
 struct IntLit : public Value {
-    int val;
+    // Holds parsed long long value and raw string for overflow detection.
+    long long val;
+    std::string raw_str;
 
-    IntLit(int val_) : val(val_) {}
+    IntLit(const std::string &s) : raw_str(s) {
+        errno = 0;
+        val = strtoll(s.c_str(), nullptr, 10);
+    }
 };
 
 struct FloatLit : public Value {
@@ -228,6 +235,7 @@ struct SelectStmt : public TreeNode {
 // Semantic value
 struct SemValue {
     int sv_int;
+    long long sv_long;
     float sv_float;
     std::string sv_str;
     OrderByDir sv_orderby_dir;

@@ -43,8 +43,32 @@ class InsertExecutor : public AbstractExecutor {
         for (size_t i = 0; i < values_.size(); i++) {
             auto &col = tab_.cols[i];
             auto &val = values_[i];
+            // Allow implicit conversion among INT/BIGINT/FLOAT
+            auto is_int_family = [](ColType t) {
+                return t == TYPE_INT || t == TYPE_BIGINT || t == TYPE_FLOAT;
+            };
             if (col.type != val.type) {
-                throw IncompatibleTypeError(coltype2str(col.type), coltype2str(val.type));
+                if (!(is_int_family(col.type) && is_int_family(val.type))) {
+                    throw IncompatibleTypeError(coltype2str(col.type), coltype2str(val.type));
+                }
+                // Convert val to match column type
+                if (col.type == TYPE_FLOAT && val.type == TYPE_INT) {
+                    val.set_float(static_cast<float>(val.int_val));
+                } else if (col.type == TYPE_FLOAT && val.type == TYPE_BIGINT) {
+                    val.set_float(static_cast<float>(val.bigint_val));
+                } else if (col.type == TYPE_INT && val.type == TYPE_FLOAT) {
+                    val.set_int(static_cast<int>(val.float_val));
+                } else if (col.type == TYPE_INT && val.type == TYPE_BIGINT) {
+                    long long bv = val.bigint_val;
+                    if (bv > INT32_MAX || bv < INT32_MIN) {
+                        throw IncompatibleTypeError(coltype2str(col.type), coltype2str(val.type));
+                    }
+                    val.set_int(static_cast<int>(bv));
+                } else if (col.type == TYPE_BIGINT && val.type == TYPE_INT) {
+                    val.set_bigint(static_cast<long long>(val.int_val));
+                } else if (col.type == TYPE_BIGINT && val.type == TYPE_FLOAT) {
+                    val.set_bigint(static_cast<long long>(val.float_val));
+                }
             }
             val.init_raw(col.len);
             memcpy(rec.data + col.offset, val.raw->data, col.len);
