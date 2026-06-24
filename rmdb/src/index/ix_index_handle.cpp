@@ -395,12 +395,11 @@ bool IxIndexHandle::coalesce_or_redistribute(IxNodeHandle *node, Transaction *tr
     } else {
         // 合并
         bool ret = coalesce(&neighbor, &node, &parent, child_idx, transaction, root_is_latched);
+        // coalesce may recursively delete parent; only unpin if still valid
         if (neighbor != nullptr) {
             buffer_pool_manager_->unpin_page(neighbor->get_page_id(), true);
         }
-        if (parent != nullptr) {
-            buffer_pool_manager_->unpin_page(parent->get_page_id(), true);
-        }
+        // parent is already handled inside coalesce (deleted or unpinned), skip here
         return ret;
     }
 }

@@ -98,6 +98,17 @@ void SmManager::open_db(const std::string& db_name) {
     for (auto &entry : db_.tabs_) {
         auto &tab_name = entry.first;
         fhs_.emplace(tab_name, rm_manager_->open_file(tab_name));
+        // 打开该表上所有的索引文件
+        auto &tab = entry.second;
+        for (auto &idx : tab.indexes) {
+            std::vector<std::string> col_names;
+            for (auto &col : idx.cols) col_names.push_back(col.name);
+            std::string ix_name = ix_manager_->get_index_name(tab_name, col_names);
+            // 跳过已经打开的索引
+            if (ihs_.find(ix_name) == ihs_.end()) {
+                ihs_.emplace(ix_name, ix_manager_->open_index(tab_name, idx.cols));
+            }
+        }
     }
 }
 
