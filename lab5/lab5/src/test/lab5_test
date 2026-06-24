@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""Lab5 B+Tree Index Integration Test"""
+import socket, time, sys, os
+
+HOST = "127.0.0.1"
+PORT = 8765
+
+def send_sql(sock, sql):
+    sql = sql.strip()
+    if not sql.endswith(';'):
+        sql = sql + ';'
+    sock.sendall(sql.encode('utf-8') + b'\0')
+    data = b''
+    try:
+        while True:
+            chunk = sock.recv(65536)
+            if not chunk:
+                break
+            data += chunk
+            if b'\0' in chunk:
+                break
+    except socket.timeout:
+        pass
+    return data.decode('utf-8', errors='replace')
+
+def run_all_tests():
+    output_path = 'output.txt'
+    if os.path.exists(output_path):
+        os.remove(output_path)
+
+    sock = None
+    for attempt in range(20):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            sock.connect((HOST, PORT))
+            break
+        except:
+            if sock: sock.close()
+            time.sleep(0.5)
+    if not sock:
+        print("FAIL: Cannot connect to server")
+        return False
+
+    tests = [
+        # Part 1: Create/Drop/Show Index
+        "create table warehouse (id int, name char(8))",
+        "create index warehouse (id)",
+        "show index from warehouse",
+        "create index warehouse (id,name)",
+        "show index from warehouse",
+        "drop index warehouse (id)",
+        "drop index warehouse (id,name)",
+        "show index from warehouse",
+        
+        # Part 2: Index Query
+        "create table warehouse2 (w_id int, name char(8))",
+        "insert into warehouse2 values (10 , 'qweruiop')",
+        "insert into warehouse2 values (534, 'asdfhjkl')",
+        "insert into warehouse2 values (100,'qwerghjk')",
+        "insert into warehouse2 values (500,'bgtyhnmj')",
+        "create index warehouse2(w_id)",
+        "select * from warehouse2 where w_id = 10",
+        "select * from warehouse2 where w_id < 534 and w_id > 100",
+        "drop index warehouse2(w_id)",
+        "create index warehouse2(name)",
+        "select * from warehouse2 where name = 'qweruiop'",
+        "select * from warehouse2 where name > 'qwerghjk'",
+        "select * from warehouse2 where name > 'aszdefgh' and name < 'qweraaaa'",
+        "drop index warehouse2(name)",
+        "create index warehouse2(w_id,name)",
+        "select * from warehouse2 where w_id = 100 and name = 'qwerghjk'",
+        "select * from warehouse2 where w_id < 600 and name > 'bztyhnmj'",
+        
+        # Part 3: Index Maintenance
+        "create table warehouse3 (w_id int, name char(8))",
+        "insert into warehouse3 values (10 , 'qweruiop')",
+        "insert into warehouse3 values (534, 'asdfhjkl')",
+        "select * from warehouse3 where w_id = 10",
+        "select * from warehouse3 where w_id < 534 and w_id > 100",
+        "create index warehouse3(w_id)",
+        "insert into warehouse3 values (500, 'lastdanc')",
+        "update warehouse3 set w_id = 507 where w_id = 534",
+        "select * from warehouse3 where w_id = 10",
+        "select * from warehouse3 where w_id < 534 and w_id > 100",
+    ]
+    
+    passed = 0
+    failed = 0
+    
+    for sql in tests:
+        try:
+            resp = send_sql(sock, sql)
+            if 'failure' in resp.lower():
+                print(f"FAIL: {sql}")
+                print(f"  Response: {resp.strip()}")
+                failed += 1
+            else:
+                print(f"OK:   {sql}")
+                passed += 1
+        except Exception as e:
+            print(f"ERR:  {sql} -> {e}")
+            failed += 1
+    
+    sock.close()
+    
+    # Read and print output.txt content
+    if os.path.exists(output_path):
+        print("\n=== output.txt ===")
+        with open(output_path, 'r') as f:
+            print(f.read())
+    
+    print(f"\nResults: {passed} passed, {failed} failed")
+    return failed == 0
+
+if __name__ == '__main__':
+    success = run_all_tests()
+    sys.exit(0 if success else 1)

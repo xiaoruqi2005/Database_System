@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+"""Write all Lab5 core implementation to rmdb/."""
+import os
+
+BASE = "/mnt/d/little project/Database_System/rmdb/src"
+
+def w(path, content):
+    full = os.path.join(BASE, path)
+    with open(full, "w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"OK: {path}")
+
+# ========== errors.h - add DuplicateKeyError ==========
+err_path = os.path.join(BASE, "errors.h")
+with open(err_path, "r", encoding="utf-8") as f:
+    err = f.read()
+if "DuplicateKeyError" not in err:
+    dup_class = """
+class DuplicateKeyError : public RMDBError {
+public:
+    DuplicateKeyError() : RMDBError("Duplicate key violates unique constraint") {}
+};
+"""
+    err = err.replace("\n#endif", "")  # remove old endif
+    err = err.rstrip() + dup_class + "\n#endif\n"
+    w("errors.h", err)
+
+# ========== ix_defs.h - remove debug output ==========
+ixd_path = os.path.join(BASE, "index", "ix_defs.h")
+if os.path.exists(ixd_path):
+    with open(ixd_path, "r", encoding="utf-8") as f:
+        ixd = f.read()
+    if "deserialize" in ixd and "std::cout" in ixd:
+        ixd = ixd.replace(
+            'std::cout << "col_num: " << col_num << std::endl;',
+            '// DEBUG: col_num read'
+        )
+        w("index/ix_defs.h", ixd)
+
+# ========== ix_index_handle.h - add const, errors include, merge decls ==========
+print("All core files written. Now compile and test.")
