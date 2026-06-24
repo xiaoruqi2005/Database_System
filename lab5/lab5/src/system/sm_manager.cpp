@@ -116,6 +116,11 @@ void SmManager::flush_meta() {
 void SmManager::close_db() {
     // 刷新元数据
     flush_meta();
+    // 关闭所有索引句柄
+    for (auto &entry : ihs_) {
+        ix_manager_->close_index(entry.second.get());
+    }
+    ihs_.clear();
     // 关闭所有表的记录文件句柄
     fhs_.clear();
     // 回到根目录
@@ -210,6 +215,18 @@ void SmManager::create_table(const std::string& tab_name, const std::vector<ColD
 void SmManager::drop_table(const std::string& tab_name, Context* context) {
     // 检查表是否存在，不存在则抛出异常（会被上层捕获并输出 failure）
     TabMeta &tab = db_.get_table(tab_name);
+    
+    // 先删除表上所有索引
+    std::vector<std::vector<std::string>> idx_cols;
+    for (auto &idx : tab.indexes) {
+        std::vector<std::string> cols;
+        for (auto &col : idx.cols) cols.push_back(col.name);
+        idx_cols.push_back(cols);
+    }
+    for (auto &cols : idx_cols) {
+        drop_index(tab_name, cols, context);
+    }
+    
     // 先正确关闭表的记录文件句柄（刷盘并关闭fd），再从 map 中移除
     auto it = fhs_.find(tab_name);
     if (it != fhs_.end()) {
