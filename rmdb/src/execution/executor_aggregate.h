@@ -28,22 +28,13 @@ class AggregateExecutor : public AbstractExecutor {
             col.tab_name = "";
             col.name = agg.alias;
             col.type = agg.agg_col_type;
-            col.len = get_type_len(agg.agg_col_type);
+            // Use the actual source column length so char(n) results are not truncated
+            col.len = agg.agg_col_len;
             col.offset = curr_offset;
             curr_offset += col.len;
             cols_.push_back(col);
         }
         len_ = curr_offset;
-    }
-
-    static int get_type_len(ColType type) {
-        switch (type) {
-            case TYPE_INT:      return sizeof(int);
-            case TYPE_FLOAT:    return sizeof(float);
-            case TYPE_BIGINT:   return sizeof(long long);
-            case TYPE_DATETIME: return sizeof(long long);
-            default:            return sizeof(long long);
-        }
     }
 
     void beginTuple() override {

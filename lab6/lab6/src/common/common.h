@@ -113,4 +113,5 @@ struct AggSel {
     TabCol col;             // argument column (empty for COUNT(*))
     std::string alias;      // output column name (alias or generated)
     ColType agg_col_type;   // result type of this aggregate
+    int agg_col_len = 0;    // result column length in bytes (matters for char)
 };

@@ -56,6 +56,7 @@ std::shared_ptr<Query> Analyze::do_analyze(std::shared_ptr<ast::TreeNode> parse)
             agg_sel.is_count_star = sv_agg->is_count_star;
             if (agg_sel.is_count_star) {
                 agg_sel.agg_col_type = TYPE_INT;
+                agg_sel.agg_col_len = sizeof(int);
             } else {
                 TabCol target = {.tab_name = sv_agg->col->tab_name, .col_name = sv_agg->col->col_name};
                 target = check_column(all_cols, target);
@@ -65,12 +66,15 @@ std::shared_ptr<Query> Analyze::do_analyze(std::shared_ptr<ast::TreeNode> parse)
                 ColType col_type = col_meta->type;
                 if (sv_agg->agg_type == ast::AGG_COUNT) {
                     agg_sel.agg_col_type = TYPE_INT;
+                    agg_sel.agg_col_len = sizeof(int);
                 } else if (sv_agg->agg_type == ast::AGG_SUM) {
                     if (!is_numeric_type(col_type))
                         throw IncompatibleTypeError(coltype2str(col_type), "numeric");
                     agg_sel.agg_col_type = col_type;
+                    agg_sel.agg_col_len = col_meta->len;
                 } else {
                     agg_sel.agg_col_type = col_type;
+                    agg_sel.agg_col_len = col_meta->len;
                 }
             }
             if (!sv_agg->alias.empty()) {
