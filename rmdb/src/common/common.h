@@ -32,8 +32,8 @@ struct Value {
     ColType type;  // type of value
     union {
         int int_val;          // int value
-        long long bigint_val; // bigint value
-        float float_val;     // float value
+        float float_val;      // float value
+        long long datetime_val;  // datetime value (encoded as YYYYMMDDHHMMSS)
     };
     std::string str_val;  // string value
 
@@ -42,11 +42,6 @@ struct Value {
     void set_int(int int_val_) {
         type = TYPE_INT;
         int_val = int_val_;
-    }
-
-    void set_bigint(long long bigint_val_) {
-        type = TYPE_BIGINT;
-        bigint_val = bigint_val_;
     }
 
     void set_float(float float_val_) {
@@ -59,18 +54,23 @@ struct Value {
         str_val = std::move(str_val_);
     }
 
+    void set_datetime(long long datetime_val_) {
+        type = TYPE_DATETIME;
+        datetime_val = datetime_val_;
+    }
+
     void init_raw(int len) {
         assert(raw == nullptr);
         raw = std::make_shared<RmRecord>(len);
         if (type == TYPE_INT) {
             assert(len == sizeof(int));
             *(int *)(raw->data) = int_val;
-        } else if (type == TYPE_BIGINT) {
-            assert(len == sizeof(long long));
-            *(long long *)(raw->data) = bigint_val;
         } else if (type == TYPE_FLOAT) {
             assert(len == sizeof(float));
             *(float *)(raw->data) = float_val;
+        } else if (type == TYPE_DATETIME) {
+            assert(len == sizeof(long long));
+            *(long long *)(raw->data) = datetime_val;
         } else if (type == TYPE_STRING) {
             if (len < (int)str_val.size()) {
                 throw StringOverflowError();

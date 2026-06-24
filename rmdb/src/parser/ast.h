@@ -9,53 +9,36 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 #pragma once
 
-#include <vector>
-#include <string>
 #include <memory>
-#include <cerrno>
-#include <cstdlib>
+#include <string>
+#include <vector>
 
-enum JoinType {
-    INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN
-};
+enum JoinType { INNER_JOIN, LEFT_JOIN, RIGHT_JOIN, FULL_JOIN };
+
 namespace ast {
 
-enum SvType {
-    SV_TYPE_INT, SV_TYPE_FLOAT, SV_TYPE_STRING, SV_TYPE_BIGINT
-};
+enum SvType { SV_TYPE_INT, SV_TYPE_FLOAT, SV_TYPE_STRING, SV_TYPE_DATETIME };
 
-enum SvCompOp {
-    SV_OP_EQ, SV_OP_NE, SV_OP_LT, SV_OP_GT, SV_OP_LE, SV_OP_GE
-};
+enum SvCompOp { SV_OP_EQ, SV_OP_NE, SV_OP_LT, SV_OP_GT, SV_OP_LE, SV_OP_GE };
 
-enum OrderByDir {
-    OrderBy_DEFAULT,
-    OrderBy_ASC,
-    OrderBy_DESC
-};
+enum OrderByDir { OrderBy_DEFAULT, OrderBy_ASC, OrderBy_DESC };
 
 // Base class for tree nodes
 struct TreeNode {
     virtual ~TreeNode() = default;  // enable polymorphism
 };
 
-struct Help : public TreeNode {
-};
+struct Help : public TreeNode {};
 
-struct ShowTables : public TreeNode {
-};
+struct ShowTables : public TreeNode {};
 
-struct TxnBegin : public TreeNode {
-};
+struct TxnBegin : public TreeNode {};
 
-struct TxnCommit : public TreeNode {
-};
+struct TxnCommit : public TreeNode {};
 
-struct TxnAbort : public TreeNode {
-};
+struct TxnAbort : public TreeNode {};
 
-struct TxnRollback : public TreeNode {
-};
+struct TxnRollback : public TreeNode {};
 
 struct TypeLen : public TreeNode {
     SvType type;
@@ -64,8 +47,7 @@ struct TypeLen : public TreeNode {
     TypeLen(SvType type_, int len_) : type(type_), len(len_) {}
 };
 
-struct Field : public TreeNode {
-};
+struct Field : public TreeNode {};
 
 struct ColDef : public Field {
     std::string col_name;
@@ -111,32 +93,28 @@ struct DropIndex : public TreeNode {
             tab_name(std::move(tab_name_)), col_names(std::move(col_names_)) {}
 };
 
-struct Expr : public TreeNode {
+struct ShowIndex : public TreeNode {
+    std::string tab_name;
+
+    ShowIndex(std::string tab_name_) : tab_name(std::move(tab_name_)) {}
 };
 
-struct Value : public Expr {
-};
+struct Expr : public TreeNode {};
+
+struct Value : public Expr {};
 
 struct IntLit : public Value {
-    // Holds parsed long long value and raw string for overflow detection.
-    long long val;
-    std::string raw_str;
-
-    IntLit(const std::string &s) : raw_str(s) {
-        errno = 0;
-        val = strtoll(s.c_str(), nullptr, 10);
-    }
+    int val;
+    IntLit(int val_) : val(val_) {}
 };
 
 struct FloatLit : public Value {
     float val;
-
     FloatLit(float val_) : val(val_) {}
 };
 
 struct StringLit : public Value {
     std::string val;
-
     StringLit(std::string val_) : val(std::move(val_)) {}
 };
 
@@ -165,12 +143,11 @@ struct BinaryExpr : public TreeNode {
             lhs(std::move(lhs_)), op(op_), rhs(std::move(rhs_)) {}
 };
 
-struct OrderBy : public TreeNode
-{
+struct OrderBy : public TreeNode {
     std::shared_ptr<Col> cols;
     OrderByDir orderby_dir;
-    OrderBy( std::shared_ptr<Col> cols_, OrderByDir orderby_dir_) :
-       cols(std::move(cols_)), orderby_dir(std::move(orderby_dir_)) {}
+    OrderBy(std::shared_ptr<Col> cols_, OrderByDir orderby_dir_) :
+            cols(std::move(cols_)), orderby_dir(std::move(orderby_dir_)) {}
 };
 
 struct InsertStmt : public TreeNode {
@@ -200,42 +177,25 @@ struct UpdateStmt : public TreeNode {
             tab_name(std::move(tab_name_)), set_clauses(std::move(set_clauses_)), conds(std::move(conds_)) {}
 };
 
-struct JoinExpr : public TreeNode {
-    std::string left;
-    std::string right;
-    std::vector<std::shared_ptr<BinaryExpr>> conds;
-    JoinType type;
-
-    JoinExpr(std::string left_, std::string right_,
-               std::vector<std::shared_ptr<BinaryExpr>> conds_, JoinType type_) :
-            left(std::move(left_)), right(std::move(right_)), conds(std::move(conds_)), type(type_) {}
-};
-
 struct SelectStmt : public TreeNode {
     std::vector<std::shared_ptr<Col>> cols;
     std::vector<std::string> tabs;
     std::vector<std::shared_ptr<BinaryExpr>> conds;
-    std::vector<std::shared_ptr<JoinExpr>> jointree;
-
-    
-    bool has_sort;
     std::shared_ptr<OrderBy> order;
-
+    bool has_sort;
 
     SelectStmt(std::vector<std::shared_ptr<Col>> cols_,
                std::vector<std::string> tabs_,
                std::vector<std::shared_ptr<BinaryExpr>> conds_,
                std::shared_ptr<OrderBy> order_) :
-            cols(std::move(cols_)), tabs(std::move(tabs_)), conds(std::move(conds_)), 
-            order(std::move(order_)) {
-                has_sort = (bool)order;
-            }
+            cols(std::move(cols_)), tabs(std::move(tabs_)), conds(std::move(conds_)), order(std::move(order_)) {
+        has_sort = (bool)order;
+    }
 };
 
 // Semantic value
 struct SemValue {
     int sv_int;
-    long long sv_long;
     float sv_float;
     std::string sv_str;
     OrderByDir sv_orderby_dir;
@@ -269,6 +229,6 @@ struct SemValue {
 
 extern std::shared_ptr<ast::TreeNode> parse_tree;
 
-}
+}  // namespace ast
 
 #define YYSTYPE ast::SemValue
