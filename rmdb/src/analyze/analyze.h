@@ -30,6 +30,8 @@ class Query{
     std::vector<TabCol> cols;
     // 聚合选择项
     std::vector<std::shared_ptr<ast::Col>> aggregate_cols;
+    // select limit，-1 表示无限制
+    int limit = -1;
     // 表名
     std::vector<std::string> tables;
     // update 的set 值
