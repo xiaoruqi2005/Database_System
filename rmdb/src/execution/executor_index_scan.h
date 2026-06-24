@@ -30,7 +30,8 @@ class IndexScanExecutor : public AbstractExecutor {
     IndexMeta index_meta_;                      // index scan涉及到的索引元数据
 
     Rid rid_;
-    std::unique_ptr<RecScan> scan_;
+    std::vector<Rid> rids_;
+    size_t pos_ = 0;
 
     SmManager *sm_manager_;
 
@@ -65,16 +66,25 @@ class IndexScanExecutor : public AbstractExecutor {
     }
 
     void beginTuple() override {
-        
+        rids_ = sm_manager_->scan_memory_index(tab_name_, index_col_names_, fed_conds_);
+        pos_ = 0;
+        if (!is_end()) rid_ = rids_[pos_];
     }
 
     void nextTuple() override {
-        
+        if (!is_end()) ++pos_;
+        if (!is_end()) rid_ = rids_[pos_];
     }
 
     std::unique_ptr<RmRecord> Next() override {
-        return nullptr;
+        return fh_->get_record(rid_, context_);
     }
 
     Rid &rid() override { return rid_; }
+
+    bool is_end() const override { return pos_ >= rids_.size(); }
+
+    size_t tupleLen() const override { return len_; }
+
+    const std::vector<ColMeta> &cols() const override { return cols_; }
 };
