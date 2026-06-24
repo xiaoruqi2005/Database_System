@@ -28,6 +28,8 @@ class Query{
     std::vector<Condition> conds;
     // 投影列
     std::vector<TabCol> cols;
+    // 聚合选择项
+    std::vector<std::shared_ptr<ast::Col>> aggregate_cols;
     // 表名
     std::vector<std::string> tables;
     // update 的set 值

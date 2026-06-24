@@ -38,11 +38,14 @@ struct PortalStmt {
     portalTag tag;
     
     std::vector<TabCol> sel_cols;
+    std::vector<std::shared_ptr<ast::Col>> aggregate_cols;
     std::unique_ptr<AbstractExecutor> root;
     std::shared_ptr<Plan> plan;
     
-    PortalStmt(portalTag tag_, std::vector<TabCol> sel_cols_, std::unique_ptr<AbstractExecutor> root_, std::shared_ptr<Plan> plan_) :
-            tag(tag_), sel_cols(std::move(sel_cols_)), root(std::move(root_)), plan(std::move(plan_)) {}
+    PortalStmt(portalTag tag_, std::vector<TabCol> sel_cols_, std::unique_ptr<AbstractExecutor> root_, std::shared_ptr<Plan> plan_,
+               std::vector<std::shared_ptr<ast::Col>> aggregate_cols_ = {}) :
+            tag(tag_), sel_cols(std::move(sel_cols_)), aggregate_cols(std::move(aggregate_cols_)),
+            root(std::move(root_)), plan(std::move(plan_)) {}
 };
 
 class Portal
@@ -69,7 +72,8 @@ class Portal
                 {
                     std::shared_ptr<ProjectionPlan> p = std::dynamic_pointer_cast<ProjectionPlan>(x->subplan_);
                     std::unique_ptr<AbstractExecutor> root= convert_plan_executor(p, context);
-                    return std::make_shared<PortalStmt>(PORTAL_ONE_SELECT, std::move(p->sel_cols_), std::move(root), plan);
+                    return std::make_shared<PortalStmt>(PORTAL_ONE_SELECT, std::move(p->sel_cols_), std::move(root), plan,
+                                                        std::move(p->aggregate_cols_));
                 }
                     
                 case T_Update:
@@ -121,7 +125,8 @@ class Portal
         switch(portal->tag) {
             case PORTAL_ONE_SELECT:
             {
-                ql->select_from(std::move(portal->root), std::move(portal->sel_cols), context);
+                ql->select_from(std::move(portal->root), std::move(portal->sel_cols), context,
+                                std::move(portal->aggregate_cols));
                 break;
             }
 
