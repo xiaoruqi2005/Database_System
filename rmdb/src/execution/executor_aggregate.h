@@ -1,0 +1,170 @@
+/* Copyright (c) 2023 Renmin University of China
+RMDB is licensed under Mulan PSL v2. */
+
+#pragma once
+#include "execution_defs.h"
+#include "execution_manager.h"
+#include "executor_abstract.h"
+#include "index/ix.h"
+#include "system/sm.h"
+
+#include <limits>
+
+class AggregateExecutor : public AbstractExecutor {
+   private:
+    std::unique_ptr<AbstractExecutor> prev_;
+    std::vector<AggSel> aggs_;
+    std::vector<ColMeta> cols_;
+    size_t len_;
+    std::unique_ptr<RmRecord> computed_rec_;
+    bool emitted_;
+
+   public:
+    AggregateExecutor(std::unique_ptr<AbstractExecutor> prev, const std::vector<AggSel> &aggs)
+        : prev_(std::move(prev)), aggs_(aggs), emitted_(false) {
+        size_t curr_offset = 0;
+        for (auto &agg : aggs_) {
+            ColMeta col;
+            col.tab_name = "";
+            col.name = agg.alias;
+            col.type = agg.agg_col_type;
+            col.len = get_type_len(agg.agg_col_type);
+            col.offset = curr_offset;
+            curr_offset += col.len;
+            cols_.push_back(col);
+        }
+        len_ = curr_offset;
+    }
+
+    static int get_type_len(ColType type) {
+        switch (type) {
+            case TYPE_INT:      return sizeof(int);
+            case TYPE_FLOAT:    return sizeof(float);
+            case TYPE_BIGINT:   return sizeof(long long);
+            case TYPE_DATETIME: return sizeof(long long);
+            default:            return sizeof(long long);
+        }
+    }
+
+    void beginTuple() override {
+        prev_->beginTuple();
+
+        long long count_val = 0;
+        std::vector<long long> sum_int(aggs_.size(), 0);
+        std::vector<double> sum_float(aggs_.size(), 0.0);
+        std::vector<bool> has_value(aggs_.size(), false);
+        std::vector<long long> maxmin_int(aggs_.size(), 0);
+        std::vector<float> maxmin_float(aggs_.size(), 0.0f);
+        std::vector<std::string> maxmin_str(aggs_.size());
+
+        while (!prev_->is_end()) {
+            auto rec = prev_->Next();
+            count_val++;
+
+            for (size_t i = 0; i < aggs_.size(); i++) {
+                auto &agg = aggs_[i];
+                if (agg.agg_type == ast::AGG_COUNT) {
+                    continue;
+                }
+
+                TabCol target = agg.col;
+                auto &prev_cols = prev_->cols();
+                auto pos = get_col(prev_cols, target);
+                ColMeta src_col = *pos;
+                char *data = rec->data + src_col.offset;
+
+                if (agg.agg_type == ast::AGG_SUM) {
+                    if (src_col.type == TYPE_INT) {
+                        sum_int[i] += *(int *)data;
+                    } else if (src_col.type == TYPE_FLOAT) {
+                        sum_float[i] += *(float *)data;
+                    } else if (src_col.type == TYPE_BIGINT) {
+                        sum_int[i] += *(long long *)data;
+                    }
+                } else if (agg.agg_type == ast::AGG_MAX) {
+                    if (src_col.type == TYPE_INT) {
+                        int v = *(int *)data;
+                        if (!has_value[i] || v > maxmin_int[i]) maxmin_int[i] = v;
+                    } else if (src_col.type == TYPE_FLOAT) {
+                        float v = *(float *)data;
+                        if (!has_value[i] || v > maxmin_float[i]) maxmin_float[i] = v;
+                    } else if (src_col.type == TYPE_BIGINT) {
+                        long long v = *(long long *)data;
+                        if (!has_value[i] || v > maxmin_int[i]) maxmin_int[i] = v;
+                    } else if (src_col.type == TYPE_STRING) {
+                        std::string v(data, src_col.len);
+                        v.resize(strlen(v.c_str()));
+                        if (!has_value[i] || v > maxmin_str[i]) maxmin_str[i] = v;
+                    }
+                    has_value[i] = true;
+                } else if (agg.agg_type == ast::AGG_MIN) {
+                    if (src_col.type == TYPE_INT) {
+                        int v = *(int *)data;
+                        if (!has_value[i] || v < maxmin_int[i]) maxmin_int[i] = v;
+                    } else if (src_col.type == TYPE_FLOAT) {
+                        float v = *(float *)data;
+                        if (!has_value[i] || v < maxmin_float[i]) maxmin_float[i] = v;
+                    } else if (src_col.type == TYPE_BIGINT) {
+                        long long v = *(long long *)data;
+                        if (!has_value[i] || v < maxmin_int[i]) maxmin_int[i] = v;
+                    } else if (src_col.type == TYPE_STRING) {
+                        std::string v(data, src_col.len);
+                        v.resize(strlen(v.c_str()));
+                        if (!has_value[i] || v < maxmin_str[i]) maxmin_str[i] = v;
+                    }
+                    has_value[i] = true;
+                }
+            }
+            prev_->nextTuple();
+        }
+
+        computed_rec_ = std::make_unique<RmRecord>(len_);
+        for (size_t i = 0; i < aggs_.size(); i++) {
+            auto &agg = aggs_[i];
+            char *dst = computed_rec_->data + cols_[i].offset;
+
+            if (agg.agg_type == ast::AGG_COUNT) {
+                *(int *)dst = static_cast<int>(count_val);
+            } else if (agg.agg_type == ast::AGG_SUM) {
+                if (agg.agg_col_type == TYPE_INT) {
+                    *(int *)dst = static_cast<int>(sum_int[i]);
+                } else if (agg.agg_col_type == TYPE_FLOAT) {
+                    *(float *)dst = static_cast<float>(sum_float[i]);
+                } else if (agg.agg_col_type == TYPE_BIGINT) {
+                    *(long long *)dst = sum_int[i];
+                }
+            } else if (agg.agg_type == ast::AGG_MAX || agg.agg_type == ast::AGG_MIN) {
+                if (!has_value[i]) {
+                    memset(dst, 0, cols_[i].len);
+                } else if (agg.agg_col_type == TYPE_INT) {
+                    *(int *)dst = static_cast<int>(maxmin_int[i]);
+                } else if (agg.agg_col_type == TYPE_FLOAT) {
+                    *(float *)dst = maxmin_float[i];
+                } else if (agg.agg_col_type == TYPE_BIGINT) {
+                    *(long long *)dst = maxmin_int[i];
+                } else if (agg.agg_col_type == TYPE_STRING) {
+                    memset(dst, 0, cols_[i].len);
+                    memcpy(dst, maxmin_str[i].c_str(), std::min((size_t)cols_[i].len, maxmin_str[i].size()));
+                }
+            }
+        }
+
+        emitted_ = false;
+    }
+
+    void nextTuple() override {
+        emitted_ = true;
+    }
+
+    std::unique_ptr<RmRecord> Next() override {
+        return std::make_unique<RmRecord>(*computed_rec_);
+    }
+
+    Rid &rid() override { return prev_->rid(); }
+
+    bool is_end() const override { return emitted_; }
+
+    size_t tupleLen() const override { return len_; }
+
+    const std::vector<ColMeta> &cols() const override { return cols_; }
+};
