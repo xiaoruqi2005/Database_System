@@ -55,6 +55,9 @@ class UpdateExecutor : public AbstractExecutor {
             // 更新记录到文件（原地覆盖）
             fh_->update_record(rid, rec->data, context_);
             sm_manager_->update_memory_indexes(tab_name_, old_rec->data, rec->data, rid);
+            if (context_ && context_->txn_) {
+                context_->txn_->append_write_record(new WriteRecord(WType::UPDATE_TUPLE, tab_name_, rid, *old_rec));
+            }
         }
         return nullptr;
     }

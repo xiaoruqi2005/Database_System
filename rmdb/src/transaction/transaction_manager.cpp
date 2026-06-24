@@ -43,6 +43,11 @@ Transaction * TransactionManager::begin(Transaction* txn, LogManager* log_manage
 void TransactionManager::commit(Transaction* txn, LogManager* log_manager) {
     // 更新事务状态为已提交
     txn->set_state(TransactionState::COMMITTED);
+    auto write_set = txn->get_write_set();
+    while (!write_set->empty()) {
+        delete write_set->back();
+        write_set->pop_back();
+    }
     // 从事务表中移除
     std::unique_lock<std::mutex> lock(latch_);
     txn_map.erase(txn->get_transaction_id());
@@ -55,6 +60,29 @@ void TransactionManager::commit(Transaction* txn, LogManager* log_manager) {
  * @param {LogManager} *log_manager 日志管理器指针
  */
 void TransactionManager::abort(Transaction * txn, LogManager *log_manager) {
+    auto write_set = txn->get_write_set();
+    while (!write_set->empty()) {
+        WriteRecord *write_record = write_set->back();
+        write_set->pop_back();
+        const std::string tab_name = write_record->GetTableName();
+        Rid rid = write_record->GetRid();
+        RmFileHandle *fh = sm_manager_->fhs_.at(tab_name).get();
+        if (write_record->GetWriteType() == WType::INSERT_TUPLE) {
+            auto rec = fh->get_record(rid, nullptr);
+            sm_manager_->delete_from_memory_indexes(tab_name, rec->data, &rid);
+            fh->delete_record(rid, nullptr);
+        } else if (write_record->GetWriteType() == WType::DELETE_TUPLE) {
+            RmRecord &old_rec = write_record->GetRecord();
+            fh->insert_record(rid, old_rec.data);
+            sm_manager_->insert_into_memory_indexes(tab_name, old_rec.data, rid);
+        } else if (write_record->GetWriteType() == WType::UPDATE_TUPLE) {
+            auto curr_rec = fh->get_record(rid, nullptr);
+            RmRecord &old_rec = write_record->GetRecord();
+            fh->update_record(rid, old_rec.data, nullptr);
+            sm_manager_->update_memory_indexes(tab_name, curr_rec->data, old_rec.data, rid);
+        }
+        delete write_record;
+    }
     // 更新事务状态为已回滚
     txn->set_state(TransactionState::ABORTED);
     // 从事务表中移除
