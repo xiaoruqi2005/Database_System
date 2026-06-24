@@ -107,17 +107,8 @@ class IndexScanExecutor : public AbstractExecutor {
     void beginTuple() override {
         std::string ix_name = sm_manager_->get_ix_manager()->get_index_name(tab_name_, index_col_names_);
         auto *ih = sm_manager_->ihs_.at(ix_name).get();
-        // Build key for lower bound from EQ conditions
-        char key_buf[256] = {0};
+        // Scan entire index range, filter with is_satisfied
         Iid lower = ih->leaf_begin();
-        for (auto &cond : fed_conds_) {
-            if (cond.is_rhs_val && cond.op == OP_EQ) {
-                auto col_meta = get_col(cols_, cond.lhs_col);
-                memcpy(key_buf, cond.rhs_val.raw->data, col_meta->len);
-                lower = ih->lower_bound(key_buf);
-                break;
-            }
-        }
         Iid upper = ih->leaf_end();
         scan_ = std::make_unique<IxScan>(ih, lower, upper, sm_manager_->get_bpm());
         // Skip to first satisfying record
