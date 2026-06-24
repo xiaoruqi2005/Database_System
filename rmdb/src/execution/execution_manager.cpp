@@ -167,18 +167,10 @@ void QlManager::select_from(std::unique_ptr<AbstractExecutor> executorTreeRoot, 
             char *rec_buf = Tuple->data + col.offset;
             if (col.type == TYPE_INT) {
                 col_str = std::to_string(*(int *)rec_buf);
+            } else if (col.type == TYPE_BIGINT) {
+                col_str = std::to_string(*(long long *)rec_buf);
             } else if (col.type == TYPE_FLOAT) {
                 col_str = std::to_string(*(float *)rec_buf);
-            } else if (col.type == TYPE_DATETIME) {
-                long long val = *(long long *)rec_buf;
-                int year=(int)(val/10000000000LL);val%=10000000000LL;
-                int month=(int)(val/100000000LL);val%=100000000LL;
-                int day=(int)(val/1000000LL);val%=1000000LL;
-                int hour=(int)(val/10000LL);val%=10000LL;
-                int minute=(int)(val/100);int second=(int)(val%100);
-                char buf[32];
-                snprintf(buf,sizeof(buf),"%04d-%02d-%02d %02d:%02d:%02d",year,month,day,hour,minute,second);
-                col_str = std::string(buf);
             } else if (col.type == TYPE_DATETIME) {
                 long long val = *(long long *)rec_buf;
                 int year=(int)(val/10000000000LL);val%=10000000000LL;

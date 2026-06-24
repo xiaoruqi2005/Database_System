@@ -9,6 +9,8 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 
 #pragma once
+#include <cstdint>
+
 #include "execution_defs.h"
 #include "execution_manager.h"
 #include "executor_abstract.h"
@@ -43,16 +45,29 @@ class InsertExecutor : public AbstractExecutor {
         for (size_t i = 0; i < values_.size(); i++) {
             auto &col = tab_.cols[i];
             auto &val = values_[i];
-            // Allow STRING->DATETIME implicit conversion
+            auto is_numeric_type = [](ColType type) {
+                return type == TYPE_INT || type == TYPE_BIGINT || type == TYPE_FLOAT;
+            };
             bool compatible = (col.type == val.type) ||
-                (col.type == TYPE_INT && val.type == TYPE_FLOAT) ||
-                (col.type == TYPE_FLOAT && val.type == TYPE_INT) ||
+                (is_numeric_type(col.type) && is_numeric_type(val.type)) ||
                 (col.type == TYPE_DATETIME && val.type == TYPE_STRING);
             if (!compatible) throw IncompatibleTypeError(coltype2str(col.type), coltype2str(val.type));
             if (col.type == TYPE_FLOAT && val.type == TYPE_INT) {
                 val.set_float(static_cast<float>(val.int_val));
+            } else if (col.type == TYPE_FLOAT && val.type == TYPE_BIGINT) {
+                val.set_float(static_cast<float>(val.bigint_val));
             } else if (col.type == TYPE_INT && val.type == TYPE_FLOAT) {
                 val.set_int(static_cast<int>(val.float_val));
+            } else if (col.type == TYPE_INT && val.type == TYPE_BIGINT) {
+                long long bv = val.bigint_val;
+                if (bv > INT32_MAX || bv < INT32_MIN) {
+                    throw IncompatibleTypeError(coltype2str(col.type), coltype2str(val.type));
+                }
+                val.set_int(static_cast<int>(bv));
+            } else if (col.type == TYPE_BIGINT && val.type == TYPE_INT) {
+                val.set_bigint(static_cast<long long>(val.int_val));
+            } else if (col.type == TYPE_BIGINT && val.type == TYPE_FLOAT) {
+                val.set_bigint(static_cast<long long>(val.float_val));
             } else if (col.type == TYPE_DATETIME && val.type == TYPE_STRING) {
                 const std::string &s = val.str_val;
                 if (s.length() != 19 || s[4] != 45 || s[7] != 45 || s[10] != 32 || s[13] != 58 || s[16] != 58)
@@ -76,21 +91,10 @@ class InsertExecutor : public AbstractExecutor {
             val.init_raw(col.len);
             memcpy(rec.data + col.offset, val.raw->data, col.len);
         }
+        sm_manager_->check_unique_memory_indexes(tab_name_, rec.data);
         // Insert into record file
         rid_ = fh_->insert_record(rec.data, context_);
-        
-        // Insert into index
-        for(size_t i = 0; i < tab_.indexes.size(); ++i) {
-            auto& index = tab_.indexes[i];
-            auto ih = sm_manager_->ihs_.at(sm_manager_->get_ix_manager()->get_index_name(tab_name_, index.cols)).get();
-            char* key = new char[index.col_tot_len];
-            int offset = 0;
-            for(size_t i = 0; i < index.col_num; ++i) {
-                memcpy(key + offset, rec.data + index.cols[i].offset, index.cols[i].len);
-                offset += index.cols[i].len;
-            }
-            ih->insert_entry(key, rid_, context_->txn_);
-        }
+        sm_manager_->insert_into_memory_indexes(tab_name_, rec.data, rid_);
         return nullptr;
     }
     Rid &rid() override { return rid_; }

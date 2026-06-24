@@ -22,15 +22,18 @@ See the Mulan PSL v2 for more details. */
 #include "index/ix.h"
 #include "record_printer.h"
 
-// 目前的索引匹配规则为：完全匹配索引字段，且全部为单点查询，不会自动调整where条件的顺序
 bool Planner::get_index_cols(std::string tab_name, std::vector<Condition> curr_conds, std::vector<std::string>& index_col_names) {
     index_col_names.clear();
-    for(auto& cond: curr_conds) {
-        if(cond.is_rhs_val && cond.op == OP_EQ && cond.lhs_col.tab_name.compare(tab_name) == 0)
-            index_col_names.push_back(cond.lhs_col.col_name);
-    }
     TabMeta& tab = sm_manager_->db_.get_table(tab_name);
-    if(tab.is_index(index_col_names)) return true;
+    for (auto &index : tab.indexes) {
+        if (index.cols.empty()) continue;
+        for (auto &cond : curr_conds) {
+            if (cond.is_rhs_val && cond.lhs_col.tab_name == tab_name && cond.lhs_col.col_name == index.cols[0].name) {
+                for (auto &col : index.cols) index_col_names.push_back(col.name);
+                return true;
+            }
+        }
+    }
     return false;
 }
 
@@ -320,7 +323,6 @@ std::shared_ptr<Plan> Planner::do_planner(std::shared_ptr<Query> query, Context 
         // drop index
         plannerRoot = std::make_shared<DDLPlan>(T_DropIndex, x->tab_name, x->col_names, std::vector<ColDef>());
     } else if (auto x = std::dynamic_pointer_cast<ast::ShowIndex>(query->parse)) {
-        // show index - treated as utility command
         plannerRoot = std::make_shared<OtherPlan>(T_ShowIndex, x->tab_name);
     } else if (auto x = std::dynamic_pointer_cast<ast::InsertStmt>(query->parse)) {
         // insert;

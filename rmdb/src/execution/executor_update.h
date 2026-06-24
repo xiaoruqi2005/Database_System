@@ -42,43 +42,19 @@ class UpdateExecutor : public AbstractExecutor {
         for (auto &rid : rids_) {
             // 读取旧记录
             auto rec = fh_->get_record(rid, context_);
-
-            // 删除旧记录的索引条目（先删后插，避免唯一性冲突）
-            for (auto &index : tab_.indexes) {
-                auto ih = sm_manager_->ihs_.at(
-                    sm_manager_->get_ix_manager()->get_index_name(tab_name_, index.cols)).get();
-                char *key = new char[index.col_tot_len];
-                int offset = 0;
-                for (size_t i = 0; i < index.col_num; ++i) {
-                    memcpy(key + offset, rec->data + index.cols[i].offset, index.cols[i].len);
-                    offset += index.cols[i].len;
-                }
-                ih->delete_entry(key, context_->txn_);
-                delete[] key;
-            }
+            auto old_rec = std::make_unique<RmRecord>(rec->size);
+            memcpy(old_rec->data, rec->data, rec->size);
 
             // 应用 SET 子句修改字段值
             for (auto &set_clause : set_clauses_) {
                 auto col = tab_.get_col(set_clause.lhs.col_name);
                 memcpy(rec->data + col->offset, set_clause.rhs.raw->data, col->len);
             }
+            sm_manager_->check_unique_memory_indexes(tab_name_, rec->data, &rid);
 
             // 更新记录到文件（原地覆盖）
             fh_->update_record(rid, rec->data, context_);
-
-            // 插入新记录的索引条目
-            for (auto &index : tab_.indexes) {
-                auto ih = sm_manager_->ihs_.at(
-                    sm_manager_->get_ix_manager()->get_index_name(tab_name_, index.cols)).get();
-                char *key = new char[index.col_tot_len];
-                int offset = 0;
-                for (size_t i = 0; i < index.col_num; ++i) {
-                    memcpy(key + offset, rec->data + index.cols[i].offset, index.cols[i].len);
-                    offset += index.cols[i].len;
-                }
-                ih->insert_entry(key, rid, context_->txn_);
-                delete[] key;
-            }
+            sm_manager_->update_memory_indexes(tab_name_, old_rec->data, rec->data, rid);
         }
         return nullptr;
     }

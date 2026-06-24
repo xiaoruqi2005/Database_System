@@ -40,7 +40,7 @@ struct Rid {
 };
 
 enum ColType {
-    TYPE_INT, TYPE_FLOAT, TYPE_STRING, TYPE_DATETIME
+    TYPE_INT, TYPE_FLOAT, TYPE_STRING, TYPE_BIGINT, TYPE_DATETIME
 };
 
 inline std::string coltype2str(ColType type) {
@@ -48,6 +48,7 @@ inline std::string coltype2str(ColType type) {
             {TYPE_INT,      "INT"},
             {TYPE_FLOAT,    "FLOAT"},
             {TYPE_STRING,   "STRING"},
+            {TYPE_BIGINT,   "BIGINT"},
             {TYPE_DATETIME, "DATETIME"}
     };
     return m.at(type);

@@ -14,6 +14,8 @@
 #include "ast.h"
 #include "yacc.tab.h"
 #include <iostream>
+#include <cerrno>
+#include <cstdlib>
 
 // automatically update location
 #define YY_USER_ACTION \
@@ -75,9 +77,10 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
 "SET" { return SET; }
 "SELECT" { return SELECT; }
 "INT" { return INT; }
+"BIGINT" { return BIGINT; }
 "CHAR" { return CHAR; }
 "FLOAT" { return FLOAT; }
-    "DATETIME" { return DATETIME; }
+"DATETIME" { return DATETIME; }
 "INDEX" { return INDEX; }
 "AND" { return AND; }
 "JOIN" {return JOIN;}
@@ -98,7 +101,9 @@ single_op ";"|"("|")"|","|"*"|"="|">"|"<"|"."
 }
     /* literals */
 {value_int} {
-    yylval->sv_int = atoi(yytext);
+    yylval->sv_str = std::string(yytext);
+    errno = 0;
+    yylval->sv_long = strtoll(yytext, nullptr, 10);
     return VALUE_INT;
 }
 {value_float} {

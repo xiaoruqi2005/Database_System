@@ -2,8 +2,13 @@
 RMDB is licensed under Mulan PSL v2. */
 
 #include "analyze.h"
+#include <cstdint>
 #include <cstdio>
 #include <string>
+
+static bool is_numeric_type(ColType type) {
+    return type == TYPE_INT || type == TYPE_BIGINT || type == TYPE_FLOAT;
+}
 
 static long long parse_datetime(const std::string &s) {
     if (s.length() != 19) throw IncompatibleTypeError("DATETIME", "invalid format");
@@ -56,14 +61,24 @@ std::shared_ptr<Query> Analyze::do_analyze(std::shared_ptr<ast::TreeNode> parse)
             set_clause.rhs = convert_sv_value(sv_set_clause->val);
             auto col = tab.get_col(sv_set_clause->col_name);
             bool set_compatible = (col->type == set_clause.rhs.type) ||
-                (col->type == TYPE_INT && set_clause.rhs.type == TYPE_FLOAT) ||
-                (col->type == TYPE_FLOAT && set_clause.rhs.type == TYPE_INT) ||
+                (is_numeric_type(col->type) && is_numeric_type(set_clause.rhs.type)) ||
                 (col->type == TYPE_DATETIME && set_clause.rhs.type == TYPE_STRING);
             if (!set_compatible) throw IncompatibleTypeError(coltype2str(col->type), coltype2str(set_clause.rhs.type));
             if (col->type == TYPE_FLOAT && set_clause.rhs.type == TYPE_INT)
                 set_clause.rhs.set_float(static_cast<float>(set_clause.rhs.int_val));
+            else if (col->type == TYPE_FLOAT && set_clause.rhs.type == TYPE_BIGINT)
+                set_clause.rhs.set_float(static_cast<float>(set_clause.rhs.bigint_val));
             else if (col->type == TYPE_INT && set_clause.rhs.type == TYPE_FLOAT)
                 set_clause.rhs.set_int(static_cast<int>(set_clause.rhs.float_val));
+            else if (col->type == TYPE_INT && set_clause.rhs.type == TYPE_BIGINT) {
+                long long bv = set_clause.rhs.bigint_val;
+                if (bv > INT32_MAX || bv < INT32_MIN)
+                    throw IncompatibleTypeError(coltype2str(col->type), coltype2str(set_clause.rhs.type));
+                set_clause.rhs.set_int(static_cast<int>(bv));
+            } else if (col->type == TYPE_BIGINT && set_clause.rhs.type == TYPE_INT)
+                set_clause.rhs.set_bigint(static_cast<long long>(set_clause.rhs.int_val));
+            else if (col->type == TYPE_BIGINT && set_clause.rhs.type == TYPE_FLOAT)
+                set_clause.rhs.set_bigint(static_cast<long long>(set_clause.rhs.float_val));
             else if (col->type == TYPE_DATETIME && set_clause.rhs.type == TYPE_STRING)
                 set_clause.rhs.set_datetime(parse_datetime(set_clause.rhs.str_val));
             set_clause.rhs.init_raw(col->len);
@@ -141,6 +156,17 @@ void Analyze::check_clause(const std::vector<std::string> &tab_names, std::vecto
                 cond.rhs_val.set_float(static_cast<float>(cond.rhs_val.int_val));
             else if (val_type == TYPE_FLOAT && lhs_type == TYPE_INT)
                 cond.rhs_val.set_int(static_cast<int>(cond.rhs_val.float_val));
+            else if (val_type == TYPE_INT && lhs_type == TYPE_BIGINT)
+                cond.rhs_val.set_bigint(static_cast<long long>(cond.rhs_val.int_val));
+            else if (val_type == TYPE_BIGINT && lhs_type == TYPE_INT) {
+                long long bv = cond.rhs_val.bigint_val;
+                if (bv > INT32_MAX || bv < INT32_MIN)
+                    throw IncompatibleTypeError(coltype2str(lhs_type), coltype2str(val_type));
+                cond.rhs_val.set_int(static_cast<int>(bv));
+            } else if (val_type == TYPE_BIGINT && lhs_type == TYPE_FLOAT)
+                cond.rhs_val.set_float(static_cast<float>(cond.rhs_val.bigint_val));
+            else if (val_type == TYPE_FLOAT && lhs_type == TYPE_BIGINT)
+                cond.rhs_val.set_bigint(static_cast<long long>(cond.rhs_val.float_val));
             else if (val_type == TYPE_STRING && lhs_type == TYPE_DATETIME)
                 cond.rhs_val.set_datetime(parse_datetime(cond.rhs_val.str_val));
             cond.rhs_val.init_raw(lhs_col->len);
@@ -151,8 +177,7 @@ void Analyze::check_clause(const std::vector<std::string> &tab_names, std::vecto
             rhs_type = rhs_col->type;
         }
         bool compatible = (lhs_type == rhs_type) ||
-            (lhs_type == TYPE_INT && rhs_type == TYPE_FLOAT) ||
-            (lhs_type == TYPE_FLOAT && rhs_type == TYPE_INT) ||
+            (is_numeric_type(lhs_type) && is_numeric_type(rhs_type)) ||
             (lhs_type == TYPE_DATETIME && rhs_type == TYPE_STRING) ||
             (lhs_type == TYPE_STRING && rhs_type == TYPE_DATETIME);
         if (!compatible) throw IncompatibleTypeError(coltype2str(lhs_type), coltype2str(rhs_type));
@@ -162,7 +187,35 @@ void Analyze::check_clause(const std::vector<std::string> &tab_names, std::vecto
 Value Analyze::convert_sv_value(const std::shared_ptr<ast::Value> &sv_val) {
     Value val;
     if (auto int_lit = std::dynamic_pointer_cast<ast::IntLit>(sv_val)) {
-        val.set_int(int_lit->val);
+        if (!int_lit->raw_str.empty()) {
+            std::string s = int_lit->raw_str;
+            bool negative = false;
+            size_t start = 0;
+            if (!s.empty() && s[0] == '+') {
+                start = 1;
+            } else if (!s.empty() && s[0] == '-') {
+                negative = true;
+                start = 1;
+            }
+            while (start < s.size() - 1 && s[start] == '0') start++;
+            std::string digits = s.substr(start);
+            const std::string max_str = "9223372036854775807";
+            const std::string min_str = "9223372036854775808";
+            auto cmp_abs = [](const std::string &a, const std::string &b) {
+                if (a.size() != b.size()) return a.size() < b.size() ? -1 : 1;
+                return a.compare(b);
+            };
+            if (negative) {
+                if (cmp_abs(digits, min_str) > 0) throw IncompatibleTypeError("BIGINT", "overflow");
+            } else {
+                if (cmp_abs(digits, max_str) > 0) throw IncompatibleTypeError("BIGINT", "overflow");
+            }
+        }
+        long long v = int_lit->val;
+        if (v > INT32_MAX || v < INT32_MIN)
+            val.set_bigint(v);
+        else
+            val.set_int(static_cast<int>(v));
     } else if (auto float_lit = std::dynamic_pointer_cast<ast::FloatLit>(sv_val)) {
         val.set_float(float_lit->val);
     } else if (auto str_lit = std::dynamic_pointer_cast<ast::StringLit>(sv_val)) {

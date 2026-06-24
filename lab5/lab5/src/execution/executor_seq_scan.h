@@ -59,34 +59,34 @@ class SeqScanExecutor : public AbstractExecutor {
             // rhs 是列
             auto rhs_col = get_col(cols_, cond.rhs_col);
             char *rhs_buf = const_cast<char *>(rec_data) + rhs_col->offset;
-            return compare_value(lhs_buf, rhs_buf, lhs_col->type, cond.op, lhs_col->len);
+            return compare_value(lhs_buf, rhs_buf, lhs_col->type, rhs_col->type, cond.op, lhs_col->len);
         }
     }
 
     // 比较两个原始值
     bool compare_value(const char *lhs, const char *rhs, ColType type, CompOp op, int len = 0) {
+        return compare_value(lhs, rhs, type, type, op, len);
+    }
+
+    bool compare_value(const char *lhs, const char *rhs, ColType lhs_type, ColType rhs_type, CompOp op, int len = 0) {
         int cmp_result = 0;
-        if (type == TYPE_INT) {
-            int l = *(int *)lhs;
-            int r = *(int *)rhs;
-            if (l < r) cmp_result = -1;
-            else if (l > r) cmp_result = 1;
-            else cmp_result = 0;
-        } else if (type == TYPE_DATETIME) {
+        auto is_numeric_type = [](ColType type) {
+            return type == TYPE_INT || type == TYPE_BIGINT || type == TYPE_FLOAT;
+        };
+        auto read_numeric = [](const char *data, ColType type) {
+            if (type == TYPE_INT) return static_cast<long double>(*(int *)data);
+            if (type == TYPE_BIGINT) return static_cast<long double>(*(long long *)data);
+            return static_cast<long double>(*(float *)data);
+        };
+        if (is_numeric_type(lhs_type) && is_numeric_type(rhs_type)) {
+            long double l = read_numeric(lhs, lhs_type);
+            long double r = read_numeric(rhs, rhs_type);
+            cmp_result = l < r ? -1 : (l > r ? 1 : 0);
+        } else if (lhs_type == TYPE_DATETIME && rhs_type == TYPE_DATETIME) {
             long long l = *(long long *)lhs;
             long long r = *(long long *)rhs;
             cmp_result = l < r ? -1 : (l > r ? 1 : 0);
-        } else if (type == TYPE_DATETIME) {
-            long long l = *(long long *)lhs;
-            long long r = *(long long *)rhs;
-            cmp_result = l < r ? -1 : (l > r ? 1 : 0);
-        } else if (type == TYPE_FLOAT) {
-            float l = *(float *)lhs;
-            float r = *(float *)rhs;
-            if (l < r) cmp_result = -1;
-            else if (l > r) cmp_result = 1;
-            else cmp_result = 0;
-        } else if (type == TYPE_STRING) {
+        } else if (lhs_type == TYPE_STRING && rhs_type == TYPE_STRING) {
             cmp_result = strncmp(lhs, rhs, len);
         }
         switch (op) {

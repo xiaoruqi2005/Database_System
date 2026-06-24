@@ -41,18 +41,7 @@ class DeleteExecutor : public AbstractExecutor {
         for (auto &rid : rids_) {
             // 删除记录前，先删除对应的索引条目
             auto rec = fh_->get_record(rid, context_);
-            for (auto &index : tab_.indexes) {
-                auto ih = sm_manager_->ihs_.at(
-                    sm_manager_->get_ix_manager()->get_index_name(tab_name_, index.cols)).get();
-                char *key = new char[index.col_tot_len];
-                int offset = 0;
-                for (size_t i = 0; i < index.col_num; ++i) {
-                    memcpy(key + offset, rec->data + index.cols[i].offset, index.cols[i].len);
-                    offset += index.cols[i].len;
-                }
-                ih->delete_entry(key, context_->txn_);
-                delete[] key;
-            }
+            sm_manager_->delete_from_memory_indexes(tab_name_, rec->data, &rid);
             fh_->delete_record(rid, context_);
         }
         return nullptr;

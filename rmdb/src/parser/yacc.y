@@ -24,11 +24,11 @@ using namespace ast;
 %token SHOW TABLES CREATE TABLE DROP DESC INSERT INTO VALUES DELETE FROM ASC ORDER BY
 WHERE UPDATE SET SELECT INT CHAR FLOAT INDEX AND JOIN EXIT HELP TXN_BEGIN TXN_COMMIT TXN_ABORT TXN_ROLLBACK ORDER_BY
 // non-keywords
-%token LEQ NEQ GEQ T_EOF DATETIME
+%token LEQ NEQ GEQ T_EOF BIGINT DATETIME
 
 // type-specific tokens
 %token <sv_str> IDENTIFIER VALUE_STRING
-%token <sv_int> VALUE_INT
+%token <sv_str> VALUE_INT
 %token <sv_float> VALUE_FLOAT
 
 // specify types for non-terminal symbol
@@ -188,9 +188,13 @@ type:
     {
         $$ = std::make_shared<TypeLen>(SV_TYPE_INT, sizeof(int));
     }
+    |   BIGINT
+    {
+        $$ = std::make_shared<TypeLen>(SV_TYPE_BIGINT, sizeof(long long));
+    }
     |   CHAR '(' VALUE_INT ')'
     {
-        $$ = std::make_shared<TypeLen>(SV_TYPE_STRING, $3);
+        $$ = std::make_shared<TypeLen>(SV_TYPE_STRING, std::stoi($3));
     }
     |   FLOAT
     {

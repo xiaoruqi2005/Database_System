@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_MNT_D_LITTLE_PROJECT_DATABASE_SYSTEM_RMDB_SRC_PARSER_YACC_TAB_H_INCLUDED
-# define YY_YY_MNT_D_LITTLE_PROJECT_DATABASE_SYSTEM_RMDB_SRC_PARSER_YACC_TAB_H_INCLUDED
+#ifndef YY_YY_HOME_MYPRECIOUS_DB_THREE_DATABASE_SYSTEM_RMDB_SRC_PARSER_YACC_TAB_H_INCLUDED
+# define YY_YY_HOME_MYPRECIOUS_DB_THREE_DATABASE_SYSTEM_RMDB_SRC_PARSER_YACC_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -89,11 +89,12 @@ extern int yydebug;
     NEQ = 290,                     /* NEQ  */
     GEQ = 291,                     /* GEQ  */
     T_EOF = 292,                   /* T_EOF  */
-    DATETIME = 293,                /* DATETIME  */
-    IDENTIFIER = 294,              /* IDENTIFIER  */
-    VALUE_STRING = 295,            /* VALUE_STRING  */
-    VALUE_INT = 296,               /* VALUE_INT  */
-    VALUE_FLOAT = 297              /* VALUE_FLOAT  */
+    BIGINT = 293,                  /* BIGINT  */
+    DATETIME = 294,                /* DATETIME  */
+    IDENTIFIER = 295,              /* IDENTIFIER  */
+    VALUE_STRING = 296,            /* VALUE_STRING  */
+    VALUE_INT = 297,               /* VALUE_INT  */
+    VALUE_FLOAT = 298              /* VALUE_FLOAT  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -120,4 +121,4 @@ struct YYLTYPE
 int yyparse (void);
 
 
-#endif /* !YY_YY_MNT_D_LITTLE_PROJECT_DATABASE_SYSTEM_RMDB_SRC_PARSER_YACC_TAB_H_INCLUDED  */
+#endif /* !YY_YY_HOME_MYPRECIOUS_DB_THREE_DATABASE_SYSTEM_RMDB_SRC_PARSER_YACC_TAB_H_INCLUDED  */

@@ -10,10 +10,14 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include <map>
+#include <optional>
+
 #include "index/ix.h"
 #include "record/rm_file_handle.h"
 #include "sm_defs.h"
 #include "sm_meta.h"
+#include "common/common.h"
 #include "common/context.h"
 
 class Context;
@@ -30,6 +34,7 @@ class SmManager {
     DbMeta db_;             // 当前打开的数据库的元数据
     std::unordered_map<std::string, std::unique_ptr<RmFileHandle>> fhs_;    // file name -> record file handle, 当前数据库中每张表的数据文件
     std::unordered_map<std::string, std::unique_ptr<IxIndexHandle>> ihs_;   // file name -> index file handle, 当前数据库中每个索引的文件
+    std::unordered_map<std::string, std::vector<std::map<std::string, std::vector<Rid>>>> memory_indexes_;
    private:
     DiskManager* disk_manager_;
     BufferPoolManager* buffer_pool_manager_;
@@ -79,4 +84,16 @@ class SmManager {
     void drop_index(const std::string& tab_name, const std::vector<ColMeta>& col_names, Context* context);
 
     void show_index(const std::string& tab_name, Context* context);
+
+    std::string get_index_name(const std::string& tab_name, const std::vector<std::string>& col_names);
+    std::string get_index_name(const IndexMeta& index);
+    std::string build_index_key(const IndexMeta& index, const char* rec_data, size_t prefix_cols = 0);
+    void rebuild_memory_index(const std::string& tab_name, const IndexMeta& index);
+    void rebuild_all_memory_indexes();
+    void check_unique_memory_indexes(const std::string& tab_name, const char* rec_data, const Rid* self = nullptr);
+    void insert_into_memory_indexes(const std::string& tab_name, const char* rec_data, const Rid& rid);
+    void delete_from_memory_indexes(const std::string& tab_name, const char* rec_data, const Rid* rid = nullptr);
+    void update_memory_indexes(const std::string& tab_name, const char* old_data, const char* new_data, const Rid& rid);
+    std::vector<Rid> scan_memory_index(const std::string& tab_name, const std::vector<std::string>& col_names,
+                                       const std::vector<Condition>& conds);
 };
