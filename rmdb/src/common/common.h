@@ -31,8 +31,9 @@ struct TabCol {
 struct Value {
     ColType type;  // type of value
     union {
-        int int_val;      // int value
-        float float_val;  // float value
+        int int_val;          // int value
+        float float_val;      // float value
+        long long datetime_val;  // datetime value (encoded as YYYYMMDDHHMMSS)
     };
     std::string str_val;  // string value
 
@@ -53,6 +54,11 @@ struct Value {
         str_val = std::move(str_val_);
     }
 
+    void set_datetime(long long datetime_val_) {
+        type = TYPE_DATETIME;
+        datetime_val = datetime_val_;
+    }
+
     void init_raw(int len) {
         assert(raw == nullptr);
         raw = std::make_shared<RmRecord>(len);
@@ -62,6 +68,9 @@ struct Value {
         } else if (type == TYPE_FLOAT) {
             assert(len == sizeof(float));
             *(float *)(raw->data) = float_val;
+        } else if (type == TYPE_DATETIME) {
+            assert(len == sizeof(long long));
+            *(long long *)(raw->data) = datetime_val;
         } else if (type == TYPE_STRING) {
             if (len < (int)str_val.size()) {
                 throw StringOverflowError();
