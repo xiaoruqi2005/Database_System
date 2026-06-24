@@ -5,7 +5,7 @@ def send_sql(sock, sql):
     sql = sql.strip()
     if not sql.endswith(';'):
         sql = sql + ';'
-    sock.sendall(sql.encode('utf-8') + b'\0')
+    sock.sendall(sql.encode('utf-8') + b'\0'
     data = b''
     try:
         while True:

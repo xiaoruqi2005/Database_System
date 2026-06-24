@@ -231,148 +231,25 @@ void SmManager::drop_table(const std::string& tab_name, Context* context) {
  * @param {Context*} context
  */
 void SmManager::create_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
-    // 检查表是否存在
-    TabMeta &tab = db_.get_table(tab_name);
     
-    // 检查列是否合法
-    std::vector<ColMeta> col_metas;
-    int col_tot_len = 0;
-    for (auto &col_name : col_names) {
-        bool found = false;
-        for (auto &col : tab.cols) {
-            if (col.name == col_name) {
-                col_metas.push_back(col);
-                col_tot_len += col.len;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            throw ColumnNotFoundError(col_name);
-        }
-    }
-    
-    // 检查索引是否已存在
-    if (tab.is_index(col_names)) {
-        throw IndexExistsError(tab_name, col_names);
-    }
-    
-    // 创建索引文件
-    ix_manager_->create_index(tab_name, col_metas);
-    
-    // 构建索引元数据
-    IndexMeta index_meta;
-    index_meta.tab_name = tab_name;
-    index_meta.col_tot_len = col_tot_len;
-    index_meta.col_num = col_names.size();
-    index_meta.cols = col_metas;
-    
-    // 打开索引文件并存储句柄
-    std::string ix_name = ix_manager_->get_index_name(tab_name, col_names);
-    ihs_.emplace(ix_name, ix_manager_->open_index(tab_name, col_metas));
-    
-    // 在表元数据中添加索引
-    tab.indexes.push_back(index_meta);
-    
-    // 设置列上的index标记
-    for (auto &col_name : col_names) {
-        for (auto &col : tab.cols) {
-            if (col.name == col_name) {
-                col.index = true;
-                break;
-            }
-        }
-    }
-    
-    flush_meta();
 }
 
+/**
+ * @description: 删除索引
+ * @param {string&} tab_name 表名称
+ * @param {vector<string>&} col_names 索引包含的字段名称
+ * @param {Context*} context
+ */
 void SmManager::drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
-    // 检查表是否存在
-    TabMeta &tab = db_.get_table(tab_name);
     
-    // 构建索引名称
-    std::string ix_name = ix_manager_->get_index_name(tab_name, col_names);
-    
-    // 从表元数据中删除index_meta
-    bool found = false;
-    for (auto it = tab.indexes.begin(); it != tab.indexes.end(); ++it) {
-        if (it->cols.size() == col_names.size()) {
-            size_t i = 0;
-            for (; i < it->cols.size(); ++i) {
-                if (it->cols[i].name != col_names[i]) break;
-            }
-            if (i == it->cols.size()) {
-                tab.indexes.erase(it);
-                found = true;
-                break;
-            }
-        }
-    }
-    
-    if (!found) {
-        throw IndexNotFoundError(tab_name, col_names);
-    }
-    
-    // 从ihs_中关闭并删除index handle
-    auto ih_it = ihs_.find(ix_name);
-    if (ih_it != ihs_.end()) {
-        ix_manager_->close_index(ih_it->second.get());
-        ihs_.erase(ih_it);
-    }
-    
-    // 清除列上的index标记（如果该列不再被任何其他索引使用）
-    for (auto &col_name : col_names) {
-        bool still_indexed = false;
-        for (auto &idx : tab.indexes) {
-            for (auto &idx_col : idx.cols) {
-                if (idx_col.name == col_name) {
-                    still_indexed = true;
-                    break;
-                }
-            }
-            if (still_indexed) break;
-        }
-        if (!still_indexed) {
-            for (auto &col : tab.cols) {
-                if (col.name == col_name) {
-                    col.index = false;
-                    break;
-                }
-            }
-        }
-    }
-    
-    // 删除index文件
-    ix_manager_->destroy_index(tab_name, col_names);
-    
-    flush_meta();
 }
 
+/**
+ * @description: 删除索引
+ * @param {string&} tab_name 表名称
+ * @param {vector<ColMeta>&} 索引包含的字段元数据
+ * @param {Context*} context
+ */
 void SmManager::drop_index(const std::string& tab_name, const std::vector<ColMeta>& cols, Context* context) {
-    std::vector<std::string> col_names;
-    for (auto &col : cols) {
-        col_names.push_back(col.name);
-    }
-    drop_index(tab_name, col_names, context);
-}
-
-void SmManager::show_index(const std::string& tab_name, Context* context) {
-    // 检查表是否存在
-    TabMeta &tab = db_.get_table(tab_name);
     
-    RecordPrinter printer(3);
-    printer.print_separator(context);
-    
-    for (auto &index : tab.indexes) {
-        std::string col_str = "(";
-        for (size_t i = 0; i < index.cols.size(); ++i) {
-            if (i > 0) col_str += ",";
-            col_str += index.cols[i].name;
-        }
-        col_str += ")";
-        printer.print_record({tab_name, "unique", col_str}, context);
-    }
-    
-    printer.print_separator(context);
 }
