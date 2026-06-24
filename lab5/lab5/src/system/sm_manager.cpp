@@ -116,11 +116,6 @@ void SmManager::flush_meta() {
 void SmManager::close_db() {
     // 刷新元数据
     flush_meta();
-    // 关闭所有索引句柄
-    for (auto &entry : ihs_) {
-        ix_manager_->close_index(entry.second.get());
-    }
-    ihs_.clear();
     // 关闭所有表的记录文件句柄
     fhs_.clear();
     // 回到根目录
@@ -378,6 +373,9 @@ void SmManager::show_index(const std::string& tab_name, Context* context) {
     // 检查表是否存在
     TabMeta &tab = db_.get_table(tab_name);
     
+    std::fstream outfile;
+    outfile.open("output.txt", std::ios::out | std::ios::app);
+    
     RecordPrinter printer(3);
     printer.print_separator(context);
     
@@ -389,7 +387,9 @@ void SmManager::show_index(const std::string& tab_name, Context* context) {
         }
         col_str += ")";
         printer.print_record({tab_name, "unique", col_str}, context);
+        outfile << "| " << tab_name << " | unique | " << col_str << " |\n";
     }
     
     printer.print_separator(context);
+    outfile.close();
 }
