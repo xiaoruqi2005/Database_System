@@ -111,6 +111,9 @@ class SeqScanExecutor : public AbstractExecutor {
     }
 
     void beginTuple() override {
+        if (context_ && context_->lock_mgr_ && context_->txn_) {
+            context_->lock_mgr_->lock_shared_on_table(context_->txn_, fh_->GetFd());
+        }
         scan_ = std::make_unique<RmScan>(fh_);
         // 跳过不满足条件的记录
         while (!scan_->is_end()) {

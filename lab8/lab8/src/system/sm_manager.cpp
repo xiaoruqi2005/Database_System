@@ -221,9 +221,12 @@ void SmManager::drop_table(const std::string& tab_name, Context* context) {
     }
     // 删除记录文件
     rm_manager_->destroy_file(tab_name);
-    for (auto it = memory_indexes_.begin(); it != memory_indexes_.end();) {
-        if (it->first.rfind(tab_name + ".", 0) == 0) it = memory_indexes_.erase(it);
-        else ++it;
+    {
+        std::lock_guard<std::recursive_mutex> lock(index_latch_);
+        for (auto it = memory_indexes_.begin(); it != memory_indexes_.end();) {
+            if (it->first.rfind(tab_name + ".", 0) == 0) it = memory_indexes_.erase(it);
+            else ++it;
+        }
     }
     // 从元数据中移除表
     db_.tabs_.erase(tab_name);
@@ -271,7 +274,10 @@ void SmManager::create_index(const std::string& tab_name, const std::vector<std:
 void SmManager::drop_index(const std::string& tab_name, const std::vector<std::string>& col_names, Context* context) {
     TabMeta &tab = db_.get_table(tab_name);
     auto index = tab.get_index_meta(col_names);
-    memory_indexes_.erase(get_index_name(*index));
+    {
+        std::lock_guard<std::recursive_mutex> lock(index_latch_);
+        memory_indexes_.erase(get_index_name(*index));
+    }
     tab.indexes.erase(index);
     for (auto &col : tab.cols) {
         col.index = false;
@@ -341,6 +347,7 @@ std::string SmManager::build_index_key(const IndexMeta& index, const char* rec_d
 }
 
 void SmManager::rebuild_memory_index(const std::string& tab_name, const IndexMeta& index) {
+    std::lock_guard<std::recursive_mutex> lock(index_latch_);
     auto &prefix_maps = memory_indexes_[get_index_name(index)];
     prefix_maps.assign(index.cols.size(), {});
     auto fh = fhs_.at(tab_name).get();
@@ -357,6 +364,7 @@ void SmManager::rebuild_memory_index(const std::string& tab_name, const IndexMet
 }
 
 void SmManager::rebuild_all_memory_indexes() {
+    std::lock_guard<std::recursive_mutex> lock(index_latch_);
     memory_indexes_.clear();
     for (auto &tab_pair : db_.tabs_) {
         for (auto &index : tab_pair.second.indexes) rebuild_memory_index(tab_pair.first, index);
@@ -364,6 +372,7 @@ void SmManager::rebuild_all_memory_indexes() {
 }
 
 void SmManager::check_unique_memory_indexes(const std::string& tab_name, const char* rec_data, const Rid* self) {
+    std::lock_guard<std::recursive_mutex> lock(index_latch_);
     TabMeta &tab = db_.get_table(tab_name);
     for (auto &index : tab.indexes) {
         auto &prefix_maps = memory_indexes_[get_index_name(index)];
@@ -377,6 +386,7 @@ void SmManager::check_unique_memory_indexes(const std::string& tab_name, const c
 }
 
 void SmManager::insert_into_memory_indexes(const std::string& tab_name, const char* rec_data, const Rid& rid) {
+    std::lock_guard<std::recursive_mutex> lock(index_latch_);
     TabMeta &tab = db_.get_table(tab_name);
     for (auto &index : tab.indexes) {
         auto &prefix_maps = memory_indexes_[get_index_name(index)];
@@ -388,6 +398,7 @@ void SmManager::insert_into_memory_indexes(const std::string& tab_name, const ch
 }
 
 void SmManager::delete_from_memory_indexes(const std::string& tab_name, const char* rec_data, const Rid* rid) {
+    std::lock_guard<std::recursive_mutex> lock(index_latch_);
     TabMeta &tab = db_.get_table(tab_name);
     for (auto &index : tab.indexes) {
         auto &prefix_maps = memory_indexes_[get_index_name(index)];
@@ -405,12 +416,14 @@ void SmManager::delete_from_memory_indexes(const std::string& tab_name, const ch
 }
 
 void SmManager::update_memory_indexes(const std::string& tab_name, const char* old_data, const char* new_data, const Rid& rid) {
+    std::lock_guard<std::recursive_mutex> lock(index_latch_);
     delete_from_memory_indexes(tab_name, old_data, &rid);
     insert_into_memory_indexes(tab_name, new_data, rid);
 }
 
 std::vector<Rid> SmManager::scan_memory_index(const std::string& tab_name, const std::vector<std::string>& col_names,
                                               const std::vector<Condition>& conds) {
+    std::lock_guard<std::recursive_mutex> lock(index_latch_);
     TabMeta &tab = db_.get_table(tab_name);
     IndexMeta index = *tab.get_index_meta(col_names);
     auto &prefix_maps = memory_indexes_[get_index_name(index)];

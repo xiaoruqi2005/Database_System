@@ -9,6 +9,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 
 #pragma once
+
+#include <algorithm>
+#include <cstring>
+#include <memory>
+#include <vector>
+
 #include "execution_defs.h"
 #include "execution_manager.h"
 #include "executor_abstract.h"
@@ -17,17 +23,22 @@ See the Mulan PSL v2 for more details. */
 
 class NestedLoopJoinExecutor : public AbstractExecutor {
    private:
-    std::unique_ptr<AbstractExecutor> left_;    // 左儿子节点（需要join的表）
-    std::unique_ptr<AbstractExecutor> right_;   // 右儿子节点（需要join的表）
-    size_t len_;                                // join后获得的每条记录的长度
-    std::vector<ColMeta> cols_;                 // join后获得的记录的字段
+    std::unique_ptr<AbstractExecutor> left_;
+    std::unique_ptr<AbstractExecutor> right_;
+    size_t len_;
+    std::vector<ColMeta> cols_;
+    std::vector<Condition> fed_conds_;
+    bool isend = false;
 
-    std::vector<Condition> fed_conds_;          // join条件
-    bool isend;
+    static constexpr size_t JOIN_BUFFER_SIZE = 64 * 1024 * 1024;
+    std::vector<std::unique_ptr<RmRecord>> left_block_;
+    size_t left_block_pos_ = 0;
+    std::unique_ptr<RmRecord> current_right_;
+    std::unique_ptr<RmRecord> current_joined_;
 
    public:
-    NestedLoopJoinExecutor(std::unique_ptr<AbstractExecutor> left, std::unique_ptr<AbstractExecutor> right, 
-                            std::vector<Condition> conds) {
+    NestedLoopJoinExecutor(std::unique_ptr<AbstractExecutor> left, std::unique_ptr<AbstractExecutor> right,
+                           std::vector<Condition> conds) {
         left_ = std::move(left);
         right_ = std::move(right);
         len_ = left_->tupleLen() + right_->tupleLen();
@@ -36,14 +47,10 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
         for (auto &col : right_cols) {
             col.offset += left_->tupleLen();
         }
-
         cols_.insert(cols_.end(), right_cols.begin(), right_cols.end());
-        isend = false;
         fed_conds_ = std::move(conds);
-
     }
 
-    // 比较两个原始值
     bool compare_value(const char *lhs, const char *rhs, ColType type, CompOp op, int len = 0) {
         return compare_value(lhs, rhs, type, type, op, len);
     }
@@ -80,12 +87,11 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
         }
     }
 
-    // 检查拼接后的记录是否满足所有 join 条件
     bool is_satisfied(const char *rec_data) {
         for (auto &cond : fed_conds_) {
             auto lhs_col = get_col(cols_, cond.lhs_col);
             char *lhs_buf = const_cast<char *>(rec_data) + lhs_col->offset;
-            
+
             if (cond.is_rhs_val) {
                 char *rhs_buf = cond.rhs_val.raw->data;
                 if (!compare_value(lhs_buf, rhs_buf, lhs_col->type, cond.op, lhs_col->len)) {
@@ -102,53 +108,82 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
         return true;
     }
 
+    void load_left_block() {
+        left_block_.clear();
+        left_block_pos_ = 0;
+        size_t buffered_bytes = 0;
+        const size_t tuple_len = std::max<size_t>(left_->tupleLen(), 1);
+        const size_t max_tuples = std::max<size_t>(1, JOIN_BUFFER_SIZE / tuple_len);
+
+        while (!left_->is_end() && left_block_.size() < max_tuples &&
+               (left_block_.empty() || buffered_bytes + left_->tupleLen() <= JOIN_BUFFER_SIZE)) {
+            auto rec = left_->Next();
+            buffered_bytes += rec->size;
+            left_block_.push_back(std::move(rec));
+            left_->nextTuple();
+        }
+    }
+
+    std::unique_ptr<RmRecord> join_records(const RmRecord *left_rec, const RmRecord *right_rec) {
+        std::unique_ptr<RmRecord> joined = std::make_unique<RmRecord>(len_);
+        memcpy(joined->data, left_rec->data, left_->tupleLen());
+        memcpy(joined->data + left_->tupleLen(), right_rec->data, right_->tupleLen());
+        return joined;
+    }
+
     void beginTuple() override {
         left_->beginTuple();
-        right_->beginTuple();
-        // 当左右都不为空时，寻找第一个满足连接条件的记录对
+        load_left_block();
+        if (!left_block_.empty()) {
+            right_->beginTuple();
+        }
+        current_right_.reset();
+        current_joined_.reset();
         isend = false;
         find_next_valid();
     }
 
     void nextTuple() override {
-        // 推进右表游标，然后继续寻找下一个满足条件的记录对
-        right_->nextTuple();
+        if (isend) {
+            return;
+        }
+        current_joined_.reset();
         find_next_valid();
     }
 
-    // 找到下一个满足 join 条件的记录对，用于维持游标位置
     void find_next_valid() {
-        while (!left_->is_end()) {
+        while (!left_block_.empty()) {
             while (!right_->is_end()) {
-                // 检查当前左右记录对是否满足条件
-                auto left_rec = left_->Next();
-                auto right_rec = right_->Next();
-                std::unique_ptr<RmRecord> joined = std::make_unique<RmRecord>(len_);
-                memcpy(joined->data, left_rec->data, left_->tupleLen());
-                memcpy(joined->data + left_->tupleLen(), right_rec->data, right_->tupleLen());
-                
-                if (is_satisfied(joined->data)) {
-                    // 找到满足条件的记录对，保持游标位置，返回
-                    return;
+                if (current_right_ == nullptr) {
+                    current_right_ = right_->Next();
+                }
+                while (left_block_pos_ < left_block_.size()) {
+                    auto joined = join_records(left_block_[left_block_pos_].get(), current_right_.get());
+                    left_block_pos_++;
+                    if (is_satisfied(joined->data)) {
+                        current_joined_ = std::move(joined);
+                        return;
+                    }
                 }
                 right_->nextTuple();
+                current_right_.reset();
+                left_block_pos_ = 0;
             }
-            // 右表遍历完，推进左表，重置右表
-            left_->nextTuple();
-            right_->beginTuple();
+
+            load_left_block();
+            if (!left_block_.empty()) {
+                right_->beginTuple();
+                current_right_.reset();
+            }
         }
-        // 左表也遍历完，结束
         isend = true;
     }
 
     std::unique_ptr<RmRecord> Next() override {
-        // 返回当前游标位置的拼接记录
-        auto left_rec = left_->Next();
-        auto right_rec = right_->Next();
-        std::unique_ptr<RmRecord> joined = std::make_unique<RmRecord>(len_);
-        memcpy(joined->data, left_rec->data, left_->tupleLen());
-        memcpy(joined->data + left_->tupleLen(), right_rec->data, right_->tupleLen());
-        return joined;
+        if (current_joined_ == nullptr) {
+            return nullptr;
+        }
+        return std::make_unique<RmRecord>(*current_joined_);
     }
 
     Rid &rid() override { return _abstract_rid; }

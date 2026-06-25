@@ -38,6 +38,9 @@ class DeleteExecutor : public AbstractExecutor {
 
     std::unique_ptr<RmRecord> Next() override {
         // 遍历所有待删除的 Rid，逐条删除
+        if (context_ && context_->lock_mgr_ && context_->txn_) {
+            context_->lock_mgr_->lock_exclusive_on_table(context_->txn_, fh_->GetFd());
+        }
         for (auto &rid : rids_) {
             // 删除记录前，先删除对应的索引条目
             auto rec = fh_->get_record(rid, context_);
