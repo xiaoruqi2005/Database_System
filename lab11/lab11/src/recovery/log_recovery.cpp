@@ -58,34 +58,28 @@ void RecoveryManager::analyze() {
     finished_txns_.clear();
     active_txns_.clear();
 
-    int offset = 0;
-    while (true) {
-        char header[LOG_HEADER_SIZE];
-        int header_size = disk_manager_->read_log(header, LOG_HEADER_SIZE, offset);
-        if (header_size <= 0) {
-            break;
-        }
-        if (header_size < LOG_HEADER_SIZE) {
-            break;
-        }
+    int file_size = disk_manager_->get_file_size(LOG_FILE_NAME);
+    if (file_size <= 0) {
+        return;
+    }
+    std::vector<char> log_file(file_size);
+    int read_size = disk_manager_->read_log(log_file.data(), file_size, 0);
+    if (read_size <= 0) {
+        return;
+    }
 
-        uint32_t log_tot_len = *reinterpret_cast<uint32_t *>(header + OFFSET_LOG_TOT_LEN);
+    int offset = 0;
+    while (offset + LOG_HEADER_SIZE <= read_size) {
+        const char *header = log_file.data() + offset;
+        uint32_t log_tot_len = *reinterpret_cast<const uint32_t *>(header + OFFSET_LOG_TOT_LEN);
         if (log_tot_len < LOG_HEADER_SIZE || log_tot_len > LOG_BUFFER_SIZE) {
             break;
         }
-
-        std::vector<char> log_data(log_tot_len);
-        memcpy(log_data.data(), header, LOG_HEADER_SIZE);
-        int body_size = static_cast<int>(log_tot_len) - LOG_HEADER_SIZE;
-        if (body_size > 0) {
-            int read_size = disk_manager_->read_log(log_data.data() + LOG_HEADER_SIZE, body_size,
-                                                    offset + LOG_HEADER_SIZE);
-            if (read_size < body_size) {
-                break;
-            }
+        if (offset + static_cast<int>(log_tot_len) > read_size) {
+            break;
         }
 
-        auto record = deserialize_log_record(log_data.data());
+        auto record = deserialize_log_record(log_file.data() + offset);
         if (record == nullptr) {
             break;
         }

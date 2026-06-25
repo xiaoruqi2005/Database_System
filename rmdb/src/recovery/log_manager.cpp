@@ -34,8 +34,6 @@ lsn_t LogManager::add_log_to_buffer(LogRecord* log_record) {
     log_record->serialize(log_buffer_.buffer_ + log_buffer_.offset_);
     log_buffer_.offset_ += log_record->log_tot_len_;
 
-    // Flush every generated log record. This simple WAL policy favors correctness for lab crash tests.
-    flush_log_to_disk_locked();
     return log_record->lsn_;
 }
 
