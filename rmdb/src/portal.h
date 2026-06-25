@@ -78,6 +78,10 @@ class Portal
                     
                 case T_Update:
                 {
+                    if (context && context->lock_mgr_ && context->txn_) {
+                        int tab_fd = sm_manager_->fhs_.at(x->tab_name_)->GetFd();
+                        context->lock_mgr_->lock_exclusive_on_table(context->txn_, tab_fd);
+                    }
                     std::unique_ptr<AbstractExecutor> scan= convert_plan_executor(x->subplan_, context);
                     std::vector<Rid> rids;
                     for (scan->beginTuple(); !scan->is_end(); scan->nextTuple()) {
@@ -89,6 +93,10 @@ class Portal
                 }
                 case T_Delete:
                 {
+                    if (context && context->lock_mgr_ && context->txn_) {
+                        int tab_fd = sm_manager_->fhs_.at(x->tab_name_)->GetFd();
+                        context->lock_mgr_->lock_exclusive_on_table(context->txn_, tab_fd);
+                    }
                     std::unique_ptr<AbstractExecutor> scan= convert_plan_executor(x->subplan_, context);
                     std::vector<Rid> rids;
                     for (scan->beginTuple(); !scan->is_end(); scan->nextTuple()) {

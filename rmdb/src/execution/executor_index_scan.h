@@ -66,6 +66,9 @@ class IndexScanExecutor : public AbstractExecutor {
     }
 
     void beginTuple() override {
+        if (context_ && context_->lock_mgr_ && context_->txn_) {
+            context_->lock_mgr_->lock_shared_on_table(context_->txn_, fh_->GetFd());
+        }
         rids_ = sm_manager_->scan_memory_index(tab_name_, index_col_names_, fed_conds_);
         pos_ = 0;
         if (!is_end()) rid_ = rids_[pos_];

@@ -181,7 +181,9 @@ void *client_handler(void *sock_fd) {
             break;
         }
         // 如果是单条语句的隐式事务，执行完后自动提交，并重置 txn_id 以便下次创建新事务
-        if(context->txn_->get_txn_mode() == false)
+        if(context->txn_ != nullptr && context->txn_->get_txn_mode() == false &&
+           context->txn_->get_state() != TransactionState::COMMITTED &&
+           context->txn_->get_state() != TransactionState::ABORTED)
         {
             txn_manager->commit(context->txn_, context->log_mgr_);
             txn_id = INVALID_TXN_ID;
